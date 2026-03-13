@@ -63,6 +63,80 @@ export async function getTournaments(auth: TournamentsAuth): Promise<Tournament[
   return res.json();
 }
 
+export type AuthUser = {
+  id: number;
+  organisation_id: number;
+  username: string;
+  email: string;
+  mobile: string;
+};
+
+export type LoginPayload = {
+  organisation_id: number;
+  username: string;
+  password: string;
+};
+
+export type RegisterPayload = LoginPayload & {
+  email: string;
+  mobile: string;
+};
+
+type AuthSession = {
+  user: AuthUser;
+  password: string;
+};
+
+const AUTH_STORAGE_KEY = "schedule.auth";
+
+export function getStoredAuth(): AuthSession | null {
+  try {
+    const raw = localStorage.getItem(AUTH_STORAGE_KEY);
+    if (!raw) return null;
+    return JSON.parse(raw) as AuthSession;
+  } catch {
+    return null;
+  }
+}
+
+export function setStoredAuth(session: AuthSession): void {
+  localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(session));
+}
+
+export function clearStoredAuth(): void {
+  localStorage.removeItem(AUTH_STORAGE_KEY);
+}
+
+export async function login(payload: LoginPayload): Promise<AuthUser> {
+  const res = await fetch(
+    "/api/auth/login",
+    withCricHeroesHeaders({
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    })
+  );
+  if (!res.ok) {
+    throw new Error(`Login failed: ${res.status}`);
+  }
+  return res.json();
+}
+
+export async function register(payload: RegisterPayload): Promise<AuthUser> {
+  const res = await fetch(
+    "/api/auth/register",
+    withCricHeroesHeaders({
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    })
+  );
+  if (!res.ok) {
+    throw new Error(`Registration failed: ${res.status}`);
+  }
+  return res.json();
+}
+
 export type RemainingFixture = { team1: string; team2: string };
 
 export type TeamOpponent = { name: string; upcoming: boolean };

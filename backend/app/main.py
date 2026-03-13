@@ -1,10 +1,13 @@
-from fastapi import FastAPI, HTTPException, Header
+from fastapi import FastAPI, HTTPException, Header, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 import httpx
 from pydantic import BaseModel
 import itertools
 from pathlib import Path
+from sqlalchemy import Column, Integer, String, create_engine, UniqueConstraint
+from sqlalchemy.orm import declarative_base, sessionmaker, Session
+from passlib.context import CryptContext
 
 # CricHeroes API headers (used for tournament and match endpoints)
 CRICHEROES_API_KEY = "cr!CkH3r0s"
@@ -32,6 +35,75 @@ def _upstream_headers(
 app = FastAPI(title="FastAPI Backend", version="0.1.0")
 
 
+# ------------------------
+# Database & auth helpers
+# ------------------------
+
+DATABASE_URL = "sqlite:///./app.db"
+
+engine = create_engine(
+    DATABASE_URL, connect_args={"check_same_thread": False}
+)
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+Base = declarative_base()
+
+# Use PBKDF2-SHA256 to avoid bcrypt's 72-byte password limit / backend issues
+pwd_context = CryptContext(schemes=["pbkdf2_sha256"], deprecated="auto")
+
+
+class User(Base):
+    __tablename__ = "users"
+
+    id = Column(Integer, primary_key=True, index=True)
+    organisation_id = Column(Integer, index=True, nullable=False)
+    username = Column(String(100), nullable=False)
+    password_hash = Column(String(255), nullable=False)
+    email = Column(String(255), nullable=False)
+    mobile = Column(String(50), nullable=False)
+
+    __table_args__ = (
+        UniqueConstraint(
+            "organisation_id",
+            "username",
+            name="uq_user_org_username",
+        ),
+    )
+
+
+def get_db() -> Session:
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+
+
+def hash_password(password: str) -> str:
+    return pwd_context.hash(password)
+
+
+def verify_password(plain_password: str, hashed_password: str) -> bool:
+    return pwd_context.verify(plain_password, hashed_password)
+
+
+# Create tables if they don't exist
+Base.metadata.create_all(bind=engine)
+
+
+class RegisterRequest(BaseModel):
+    organisation_id: int
+    username: str
+    password: str
+    email: str
+    mobile: str
+
+
+class LoginRequest(BaseModel):
+    organisation_id: int
+    username: str
+    password: str
+
+
 class TournamentsRequest(BaseModel):
     organizer_id: int
     username: str
@@ -42,6 +114,61 @@ ALLOWED_ORGANIZERS: list[dict[str, object]] = [
     {"organizer_id": 142060, "username": "admin", "password": "s!xone"},
     {"organizer_id": 16460, "username": "admin", "password": "s!xone"},
 ]
+
+
+@app.post("/api/auth/register")
+def register_user(payload: RegisterRequest, db: Session = Depends(get_db)):
+    existing = (
+        db.query(User)
+        .filter(
+            User.organisation_id == payload.organisation_id,
+            User.username == payload.username,
+        )
+        .first()
+    )
+    if existing is not None:
+        raise HTTPException(status_code=400, detail="User already exists for this organisation")
+
+    user = User(
+        organisation_id=payload.organisation_id,
+        username=payload.username,
+        password_hash=hash_password(payload.password),
+        email=payload.email,
+        mobile=payload.mobile,
+    )
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+
+    return {
+        "id": user.id,
+        "organisation_id": user.organisation_id,
+        "username": user.username,
+        "email": user.email,
+        "mobile": user.mobile,
+    }
+
+
+@app.post("/api/auth/login")
+def login_user(payload: LoginRequest, db: Session = Depends(get_db)):
+    user = (
+        db.query(User)
+        .filter(
+            User.organisation_id == payload.organisation_id,
+            User.username == payload.username,
+        )
+        .first()
+    )
+    if user is None or not verify_password(payload.password, user.password_hash):
+        raise HTTPException(status_code=401, detail="Invalid username, password, or organisation")
+
+    return {
+        "id": user.id,
+        "organisation_id": user.organisation_id,
+        "username": user.username,
+        "email": user.email,
+        "mobile": user.mobile,
+    }
 
 app.add_middleware(
     CORSMiddleware,
@@ -61,16 +188,27 @@ async def get_tournaments(
     api_key: str | None = Header(default=None, alias="api-key"),
     device_type: str | None = Header(default=None, alias="device-type"),
     udid: str | None = Header(default=None, alias="udid"),
+    db: Session = Depends(get_db),
 ):
-    # Validate organizer/username/password combination
-    combo_ok = any(
-        payload.organizer_id == allowed["organizer_id"]
-        and payload.username == allowed["username"]
-        and payload.password == allowed["password"]
-        for allowed in ALLOWED_ORGANIZERS
+    # Validate organizer/username/password combination against registered users
+    user = (
+        db.query(User)
+        .filter(
+            User.organisation_id == payload.organizer_id,
+            User.username == payload.username,
+        )
+        .first()
     )
-    if not combo_ok:
-        raise HTTPException(status_code=401, detail="Invalid organizer credentials")
+    if user is None or not verify_password(payload.password, user.password_hash):
+        # Fall back to legacy hard-coded combos for backward compatibility
+        combo_ok = any(
+            payload.organizer_id == allowed["organizer_id"]
+            and payload.username == allowed["username"]
+            and payload.password == allowed["password"]
+            for allowed in ALLOWED_ORGANIZERS
+        )
+        if not combo_ok:
+            raise HTTPException(status_code=401, detail="Invalid organizer credentials")
 
     url = (
         "https://api.cricheroes.in/api/v1/organizer/"

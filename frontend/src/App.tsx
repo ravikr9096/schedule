@@ -6,9 +6,15 @@ import {
   setUdid,
   Tournament,
   TeamOpponent,
+  AuthUser,
+  getStoredAuth,
+  setStoredAuth,
+  clearStoredAuth,
 } from "./api";
 import { HomePage } from "./HomePage";
 import { SchedulePage } from "./SchedulePage";
+import { LoginPage } from "./LoginPage";
+import { RegisterPage } from "./RegisterPage";
 
 export default function App() {
   const [error, setError] = useState<string | null>(null);
@@ -24,17 +30,49 @@ export default function App() {
   const [teamOpponents, setTeamOpponents] = useState<
     Record<string, TeamOpponent[]> | null
   >(null);
-  const [routeView, setRouteView] = useState<"home" | "schedule">("home");
+  const [routeView, setRouteView] = useState<
+    "home" | "login" | "register" | "schedule"
+  >("home");
   const [routeTournamentId, setRouteTournamentId] = useState<number | null>(null);
-  const [isAuthed, setIsAuthed] = useState(false);
-  const [authUser, setAuthUser] = useState("");
-  const [authPass, setAuthPass] = useState("");
-  const [authOrganizerIdInput, setAuthOrganizerIdInput] = useState("142060");
-  const [authOrganizerId, setAuthOrganizerId] = useState<number | null>(null);
-  const [authError, setAuthError] = useState<string | null>(null);
+  const [authSession, setAuthSession] = useState<{
+    user: AuthUser;
+    password: string;
+  } | null>(() => getStoredAuth());
+
+  const isAuthed = !!authSession;
+
+  function syncRoute() {
+    const path = window.location.pathname;
+    const m = path.match(/^\/schedule\/(\d+)\/?$/);
+
+    if (path === "/" || path === "") {
+      setRouteView("home");
+      setRouteTournamentId(null);
+    } else if (path === "/login" || path === "/login/") {
+      setRouteView("login");
+      setRouteTournamentId(null);
+    } else if (path === "/register" || path === "/register/") {
+      setRouteView("register");
+      setRouteTournamentId(null);
+    } else if (path === "/schedule" || path === "/schedule/") {
+      setRouteView("schedule");
+      setRouteTournamentId(null);
+    } else if (m) {
+      setRouteView("schedule");
+      setRouteTournamentId(Number(m[1]));
+    } else {
+      setRouteView("home");
+      setRouteTournamentId(null);
+    }
+  }
+
+  function navigate(path: string) {
+    window.history.pushState({}, "", path);
+    syncRoute();
+  }
 
   useEffect(() => {
-    if (!isAuthed || authOrganizerId == null) {
+    if (!isAuthed || !authSession) {
       return;
     }
 
@@ -42,9 +80,9 @@ export default function App() {
     setLoadingTournaments(true);
     setError(null);
     getTournaments({
-      organizer_id: authOrganizerId,
-      username: authUser,
-      password: authPass,
+      organizer_id: authSession.user.organisation_id,
+      username: authSession.user.username,
+      password: authSession.password,
     })
       .then((data) => {
         if (cancelled) return;
@@ -61,28 +99,9 @@ export default function App() {
     return () => {
       cancelled = true;
     };
-  }, [isAuthed, authOrganizerId, authUser, authPass]);
+  }, [isAuthed, authSession]);
 
   useEffect(() => {
-    function syncRoute() {
-      const path = window.location.pathname;
-      const m = path.match(/^\/schedule\/(\d+)\/?$/);
-
-      if (path === "/" || path === "") {
-        setRouteView("home");
-        setRouteTournamentId(null);
-      } else if (path === "/schedule" || path === "/schedule/") {
-        setRouteView("schedule");
-        setRouteTournamentId(null);
-      } else if (m) {
-        setRouteView("schedule");
-        setRouteTournamentId(Number(m[1]));
-      } else {
-        setRouteView("home");
-        setRouteTournamentId(null);
-      }
-    }
-
     syncRoute();
     window.addEventListener("popstate", syncRoute);
     return () => window.removeEventListener("popstate", syncRoute);
@@ -135,115 +154,83 @@ export default function App() {
   }, [teamOpponents]);
 
   function onSelectTournament(t: Tournament) {
-    window.history.pushState({}, "", `/schedule/${t.id}`);
-    setRouteView("schedule");
-    setRouteTournamentId(t.id);
+    navigate(`/schedule/${t.id}`);
   }
 
   function onGoToSchedule() {
-    window.history.pushState({}, "", `/schedule`);
-    setRouteView("schedule");
-    setRouteTournamentId(null);
+    if (isAuthed) {
+      navigate("/schedule");
+    } else {
+      navigate("/login");
+    }
   }
 
-  const AUTH_USER = "admin";
-  const AUTH_PASS = "s!xone";
+  function handleLoginSuccess(user: AuthUser, password: string) {
+    const session = { user, password };
+    setAuthSession(session);
+    setStoredAuth(session);
+    navigate("/schedule");
+  }
 
-  function onSubmitAuth(e: FormEvent) {
-    e.preventDefault();
+  function handleRegisterSuccess(user: AuthUser, password: string) {
+    const session = { user, password };
+    setAuthSession(session);
+    setStoredAuth(session);
+    navigate("/schedule");
+  }
 
-    const organizerIdParsed = Number(authOrganizerIdInput);
-    if (!Number.isFinite(organizerIdParsed) || organizerIdParsed <= 0) {
-      setIsAuthed(false);
-      setAuthError("Please enter a valid organizer id");
-      return;
-    }
-
-    if (authUser === AUTH_USER && authPass === AUTH_PASS) {
-      setIsAuthed(true);
-      setAuthOrganizerId(organizerIdParsed);
-      setAuthError(null);
-    } else {
-      setIsAuthed(false);
-      setAuthError("Invalid credentials");
-    }
+  function handleLogout() {
+    setAuthSession(null);
+    clearStoredAuth();
+    navigate("/");
   }
 
   return (
     <div className="page">
       <div className="card">
-        {routeView === "home" ? (
+        {routeView === "home" && (
           <HomePage onGoToSchedule={onGoToSchedule} />
-        ) : (
-          <>
-            {!isAuthed ? (
-              <div className="section">
-                <div className="sectionHeader">
-                  <h1>Schedule Login</h1>
-                </div>
-                
-                  <form className="udidForm" onSubmit={onSubmitAuth}>
-                  <div className="sectionBodyDetails">
-                    <div className="sectionBody">
-                      <label className="udidLabel">
-                        Username
-                        <input
-                          className="udidInput"
-                          value={authUser}
-                          onChange={(e) => setAuthUser(e.target.value)}
-                        />
-                      </label>
-                    </div>
-                    <div className="sectionBody">
-                      <label className="udidLabel">
-                        Password
-                        <input
-                          type="password"
-                          className="udidInput"
-                          value={authPass}
-                          onChange={(e) => setAuthPass(e.target.value)}
-                        />
-                      </label>
-                    </div>
-                    <div className="sectionBody">
-                      <label className="udidLabel">
-                        Organizer ID
-                        <input
-                          className="udidInput"
-                          value={authOrganizerIdInput}
-                          onChange={(e) => setAuthOrganizerIdInput(e.target.value)}
-                        />
-                      </label>
-                    </div>
-                    <div className="sectionBody">
-                      <button className="toggleButton" type="submit">
-                        Log in
-                      </button>
-                    </div>
-                    {authError ? <p className="error">{authError}</p> : null}
-                    </div>
-                  </form>
-                
-              </div>
-            ) : (
-              <SchedulePage
-                error={error}
-                tournaments={tournaments}
-                loadingTournaments={loadingTournaments}
-                routeTournamentId={routeTournamentId}
-                selectedTournament={selectedTournament}
-                loadingMatches={loadingMatches}
-                teamsSorted={teamsSorted}
-                teamOpponents={teamOpponents}
-                onSelectTournament={onSelectTournament}
-                onBackToList={() => {
-                  window.history.pushState({}, "", `/schedule`);
-                  setRouteView("schedule");
-                  setRouteTournamentId(null);
-                }}
-              />
-            )}
-          </>
+        )}
+        {routeView === "login" && (
+          <LoginPage
+            onLoginSuccess={handleLoginSuccess}
+            onGoToRegister={() => navigate("/register")}
+          />
+        )}
+        {routeView === "register" && (
+          <RegisterPage
+            onRegisterSuccess={handleRegisterSuccess}
+            onGoToLogin={() => navigate("/login")}
+          />
+        )}
+        {routeView === "schedule" &&
+          (isAuthed ? (
+            <SchedulePage
+              error={error}
+              tournaments={tournaments}
+              loadingTournaments={loadingTournaments}
+              routeTournamentId={routeTournamentId}
+              selectedTournament={selectedTournament}
+              loadingMatches={loadingMatches}
+              teamsSorted={teamsSorted}
+              teamOpponents={teamOpponents}
+              onSelectTournament={onSelectTournament}
+              onBackToList={() => {
+                navigate("/schedule");
+              }}
+            />
+          ) : (
+            <LoginPage
+              onLoginSuccess={handleLoginSuccess}
+              onGoToRegister={() => navigate("/register")}
+            />
+          ))}
+        {isAuthed && routeView !== "home" && (
+          <div className="sectionBody" style={{ marginTop: "1rem" }}>
+            <button className="toggleButton" onClick={handleLogout}>
+              Log out
+            </button>
+          </div>
         )}
       </div>
     </div>
