@@ -1,6 +1,9 @@
 from fastapi import FastAPI, HTTPException, Header, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
+from starlette.requests import Request
+from starlette.exceptions import HTTPException as StarletteHTTPException
 import httpx
 from pydantic import BaseModel
 import itertools
@@ -517,4 +520,14 @@ if FRONTEND_DIST.exists():
         StaticFiles(directory=FRONTEND_DIST, html=True),
         name="frontend",
     )
+
+    @app.exception_handler(StarletteHTTPException)
+    async def spa_fallback_404_handler(
+        request: Request, exc: StarletteHTTPException
+    ):
+        if exc.status_code == 404 and not request.url.path.startswith("/api"):
+            index_file = FRONTEND_DIST / "index.html"
+            if index_file.exists():
+                return FileResponse(index_file)
+        raise exc
 
