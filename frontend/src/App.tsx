@@ -11,10 +11,17 @@ import {
   setStoredAuth,
   clearStoredAuth,
 } from "./api";
-import { HomePage } from "./HomePage";
 import { SchedulePage } from "./SchedulePage";
 import { LoginPage } from "./LoginPage";
 import { RegisterPage } from "./RegisterPage";
+import { IntroductionPage } from "./pages/IntroductionPage";
+import { AboutUsPage } from "./pages/AboutUsPage";
+import { LegalPage } from "./pages/LegalPage";
+import { WhyChooseUsPage } from "./pages/WhyChooseUsPage";
+import { WhatSetsUsApartPage } from "./pages/WhatSetsUsApartPage";
+import { ClientelePage } from "./pages/ClientelePage";
+import { GalleryPage } from "./pages/GalleryPage";
+import { NavBar } from "./components/NavBar";
 
 export default function App() {
   const [error, setError] = useState<string | null>(null);
@@ -31,8 +38,17 @@ export default function App() {
     Record<string, TeamOpponent[]> | null
   >(null);
   const [routeView, setRouteView] = useState<
-    "home" | "login" | "register" | "schedule"
-  >("home");
+    | "login"
+    | "register"
+    | "schedule"
+    | "introduction"
+    | "about-us"
+    | "legal"
+    | "why-choose-us"
+    | "what-sets-us-apart"
+    | "clientele"
+    | "gallery"
+  >("introduction");
   const [routeTournamentId, setRouteTournamentId] = useState<number | null>(null);
   const [authSession, setAuthSession] = useState<{
     user: AuthUser;
@@ -46,7 +62,7 @@ export default function App() {
     const m = path.match(/^\/schedule\/(\d+)\/?$/);
 
     if (path === "/" || path === "") {
-      setRouteView("home");
+      setRouteView("introduction");
       setRouteTournamentId(null);
     } else if (path === "/login" || path === "/login/") {
       setRouteView("login");
@@ -60,8 +76,29 @@ export default function App() {
     } else if (m) {
       setRouteView("schedule");
       setRouteTournamentId(Number(m[1]));
+    } else if (path === "/introduction" || path === "/introduction/") {
+      setRouteView("introduction");
+      setRouteTournamentId(null);
+    } else if (path === "/about-us" || path === "/about-us/") {
+      setRouteView("about-us");
+      setRouteTournamentId(null);
+    } else if (path === "/legal" || path === "/legal/") {
+      setRouteView("legal");
+      setRouteTournamentId(null);
+    } else if (path === "/why-choose-us" || path === "/why-choose-us/") {
+      setRouteView("why-choose-us");
+      setRouteTournamentId(null);
+    } else if (path === "/what-sets-us-apart" || path === "/what-sets-us-apart/") {
+      setRouteView("what-sets-us-apart");
+      setRouteTournamentId(null);
+    } else if (path === "/clientele" || path === "/clientele/") {
+      setRouteView("clientele");
+      setRouteTournamentId(null);
+    } else if (path === "/gallery" || path === "/gallery/") {
+      setRouteView("gallery");
+      setRouteTournamentId(null);
     } else {
-      setRouteView("home");
+      setRouteView("introduction");
       setRouteTournamentId(null);
     }
   }
@@ -187,10 +224,15 @@ export default function App() {
 
   return (
     <div className="page">
+      <NavBar currentPath={routeView} onNavigate={navigate} />
       <div className="card">
-        {routeView === "home" && (
-          <HomePage onGoToSchedule={onGoToSchedule} />
-        )}
+        {routeView === "introduction" && <IntroductionPage />}
+        {routeView === "about-us" && <AboutUsPage />}
+        {routeView === "legal" && <LegalPage />}
+        {routeView === "why-choose-us" && <WhyChooseUsPage />}
+        {routeView === "what-sets-us-apart" && <WhatSetsUsApartPage />}
+        {routeView === "clientele" && <ClientelePage />}
+        {routeView === "gallery" && <GalleryPage />}
         {routeView === "login" && (
           <LoginPage
             onLoginSuccess={handleLoginSuccess}
@@ -225,7 +267,7 @@ export default function App() {
               onGoToRegister={() => navigate("/register")}
             />
           ))}
-        {isAuthed && routeView !== "home" && (
+        {isAuthed && routeView !== "introduction" && (
           <div className="sectionBody" style={{ marginTop: "1rem" }}>
             <button className="toggleButton" onClick={handleLogout}>
               Log out
