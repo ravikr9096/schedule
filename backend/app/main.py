@@ -216,9 +216,9 @@ async def get_tournaments(
     url = (
         "https://api.cricheroes.in/api/v1/organizer/"
         f"get-tournament-organizer-tournaments/{payload.organizer_id}"
-        "?pagesize=50&pageno=1&datetime=1773294237363"
+        "?pagesize=50&pageno=1"
     )
-    params = {"pageno": 1, "datetime": 1773283891566, "pagesize": 50}
+    params = {"pageno": 1, "pagesize": 50}
 
     try:
         async with httpx.AsyncClient(timeout=10) as client:
@@ -253,12 +253,7 @@ async def get_tournaments(
         is_live = False
         if isinstance(status, str):
             is_live = status.strip().lower() in {
-                "live",
-                "ongoing",
-                "running",
-                "inprogress",
-                "in_progress",
-                "in progress",
+                "live"
             }
         elif isinstance(status, int):
             # Common convention: 1 = live/ongoing
@@ -274,7 +269,7 @@ async def get_tournaments(
         )
 
         if name is not None and tournament_id is not None:
-            result.append({"id": tournament_id, "name": name})
+            result.append({"id": tournament_id, "name": name  })
 
     return result
 
@@ -406,8 +401,7 @@ async def get_tournament_matches(
             base_params = {
                 "tournamentid": payload.tournamentid,
                 "pagesize": 100,
-                "pageno": 1,
-                "datetime": 1773282805503,
+                "pageno": 1
             }
 
             # 3 = played/completed, 2 = upcoming
@@ -435,7 +429,6 @@ async def get_tournament_matches(
 
     played_data = played_response.json()
     upcoming_data = upcoming_response.json()
-
     played_matches = (
         played_data.get("data") or played_data.get("matches") or played_data.get("items") or []
     )
@@ -461,8 +454,7 @@ async def get_remaining_fixtures(
             base_params = {
                 "tournamentid": tournamentid,
                 "pagesize": 100,
-                "pageno": 1,
-                "datetime": 1773282805503,
+                "pageno": 1
             }
 
             # 3 = played/completed, 2 = upcoming
