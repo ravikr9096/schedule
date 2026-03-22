@@ -1,3 +1,5 @@
+import { useRef } from "react";
+
 type NavItem = { path: string; label: string };
 
 const NAV_ITEMS: NavItem[] = [
@@ -19,6 +21,22 @@ type NavBarProps = {
 };
 
 export function NavBar({ currentPath, onNavigate }: NavBarProps) {
+  const collapseRef = useRef<HTMLDivElement>(null);
+
+  const collapseNavbar = () => {
+    const el = collapseRef.current;
+    if (!el) return;
+    el.classList.remove("show");
+    document
+      .querySelector<HTMLButtonElement>('[data-bs-target="#navbarNav"]')
+      ?.setAttribute("aria-expanded", "false");
+  };
+
+  const handleNavigate = (path: string) => {
+    onNavigate(path);
+    collapseNavbar();
+  };
+
   const isActive = (path: string) => {
     if (path === "/") return currentPath === "introduction";
     return currentPath === path.slice(1).replace(/\/$/, "");
@@ -30,7 +48,7 @@ export function NavBar({ currentPath, onNavigate }: NavBarProps) {
         <button
           type="button"
           className="navbar-brand btn btn-link text-decoration-none fw-bold nav-brand"
-          onClick={() => onNavigate("/")}
+          onClick={() => handleNavigate("/")}
         >
           SixOne Productions
         </button>
@@ -45,14 +63,14 @@ export function NavBar({ currentPath, onNavigate }: NavBarProps) {
         >
           <span className="navbar-toggler-icon" />
         </button>
-        <div className="collapse navbar-collapse" id="navbarNav">
+        <div ref={collapseRef} className="collapse navbar-collapse" id="navbarNav">
           <ul className="navbar-nav ms-auto">
             {NAV_ITEMS.map(({ path, label }) => (
               <li key={path} className="nav-item">
                 <button
                   type="button"
                   className={`nav-link btn btn-link nav-link-bright ${isActive(path) ? "active" : ""}`}
-                  onClick={() => onNavigate(path)}
+                  onClick={() => handleNavigate(path)}
                 >
                   {label}
                 </button>
