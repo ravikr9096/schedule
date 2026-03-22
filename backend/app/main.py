@@ -297,12 +297,44 @@ def _extract_remaining_from_played_matches(
                     return nested_name.strip()
         return None
 
+    def extract_team_id(match: dict, side_keys: list[str], id_keys: list[str]) -> object | None:
+        for key in id_keys:
+            value = match.get(key)
+            if value is None or value == "":
+                continue
+            if isinstance(value, (int, float)) and not isinstance(value, bool):
+                return int(value) if float(value).is_integer() else value
+            if isinstance(value, str) and value.strip():
+                s = value.strip()
+                if s.isdigit():
+                    return int(s)
+                return s
+        for key in side_keys:
+            value = match.get(key)
+            if not isinstance(value, dict):
+                continue
+            nested_id = value.get("team_id") or value.get("id") or value.get("teamId")
+            if nested_id is None or nested_id == "":
+                continue
+            if isinstance(nested_id, (int, float)) and not isinstance(nested_id, bool):
+                return int(nested_id) if float(nested_id).is_integer() else nested_id
+            if isinstance(nested_id, str) and nested_id.strip():
+                s = nested_id.strip()
+                if s.isdigit():
+                    return int(s)
+                return s
+        return None
+
     teams: set[str] = set()
     played_pairs: set[frozenset[str]] = set()
     upcoming_pairs: set[frozenset[str]] = set()
 
     team1_keys = ["team1_name", "team1", "home_team", "teamA", "team_a"]
     team2_keys = ["team2_name", "team2", "away_team", "teamB", "team_b"]
+    team1_id_keys = ["team1_id", "home_team_id", "team_a_id", "teamAId", "homeTeamId"]
+    team2_id_keys = ["team2_id", "away_team_id", "team_b_id", "teamBId", "awayTeamId"]
+
+    name_to_id: dict[str, object] = {}
 
     for m in played_matches:
         if not isinstance(m, dict):
@@ -313,6 +345,13 @@ def _extract_remaining_from_played_matches(
 
         if not team1 or not team2 or team1 == team2:
             continue
+
+        tid1 = extract_team_id(m, team1_keys, team1_id_keys)
+        tid2 = extract_team_id(m, team2_keys, team2_id_keys)
+        if tid1 is not None:
+            name_to_id[team1] = tid1
+        if tid2 is not None:
+            name_to_id[team2] = tid2
 
         teams.add(team1)
         teams.add(team2)
@@ -331,6 +370,13 @@ def _extract_remaining_from_played_matches(
 
             if not team1 or not team2 or team1 == team2:
                 continue
+
+            tid1 = extract_team_id(m, team1_keys, team1_id_keys)
+            tid2 = extract_team_id(m, team2_keys, team2_id_keys)
+            if tid1 is not None:
+                name_to_id[team1] = tid1
+            if tid2 is not None:
+                name_to_id[team2] = tid2
 
             teams.add(team1)
             teams.add(team2)
@@ -356,10 +402,18 @@ def _extract_remaining_from_played_matches(
         is_upcoming = pair in upcoming_pairs
 
         team_opponents.setdefault(f["team1"], []).append(
-            {"name": f["team2"], "upcoming": is_upcoming}
+            {
+                "name": f["team2"],
+                "id": name_to_id.get(f["team2"]),
+                "upcoming": is_upcoming,
+            }
         )
         team_opponents.setdefault(f["team2"], []).append(
-            {"name": f["team1"], "upcoming": is_upcoming}
+            {
+                "name": f["team1"],
+                "id": name_to_id.get(f["team1"]),
+                "upcoming": is_upcoming,
+            }
         )
 
     for team, opponents in team_opponents.items():
@@ -375,6 +429,8 @@ def _extract_remaining_from_played_matches(
                 # If any fixture between this pair is upcoming, keep upcoming=True
                 if opp.get("upcoming") or existing.get("upcoming"):
                     existing["upcoming"] = True
+                if existing.get("id") is None and opp.get("id") is not None:
+                    existing["id"] = opp["id"]
         team_opponents[team] = sorted(
             dedup.values(), key=lambda x: str(x.get("name") or "")
         )
