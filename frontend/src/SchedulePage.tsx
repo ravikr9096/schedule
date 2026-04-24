@@ -85,7 +85,7 @@ export function SchedulePage({
                       const upcomingClass = opp.upcoming ? "upcoming" : "";
                       return (
                         <li key={opp.name} className={`chip ${upcomingClass}`}>
-                          {label}
+                          <a target="_blank" href={`https://cricheroes.com/team-profile/${opp.id}/${ opp.name.replace(/\s+/g, '-').toLowerCase()}/matches`}>{label}</a>
                         </li>
                       );
                     })}

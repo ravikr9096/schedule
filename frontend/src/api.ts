@@ -139,7 +139,11 @@ export async function register(payload: RegisterPayload): Promise<AuthUser> {
 
 export type RemainingFixture = { team1: string; team2: string };
 
-export type TeamOpponent = { name: string; upcoming: boolean };
+export type TeamOpponent = {
+  name: string;
+  id?: number | string | null;
+  upcoming: boolean;
+};
 
 export type TournamentMatchesResponse = {
   tournamentid: number;
