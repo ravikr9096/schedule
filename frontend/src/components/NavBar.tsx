@@ -3,13 +3,6 @@ import { useRef } from "react";
 type NavItem = { path: string; label: string };
 
 const NAV_ITEMS: NavItem[] = [
-  { path: "/", label: "Introduction" },
-  { path: "/about-us", label: "About Us" },
-  { path: "/legal", label: "Legal" },
-  { path: "/why-choose-us", label: "Why Choose Us" },
-  { path: "/what-sets-us-apart", label: "What Sets Us Apart" },
-  { path: "/clientele", label: "Clientele" },
-  { path: "/gallery", label: "Gallery" },
   { path: "/login", label: "Login" },
   { path: "/register", label: "Register" },
   { path: "/schedule", label: "Schedule" },

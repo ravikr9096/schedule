@@ -1,5 +1,5 @@
-import { FormEvent, useState } from "react";
-import { login, AuthUser } from "./api";
+import { FormEvent, useState, useEffect } from "react";
+import { login, AuthUser, getStoredAuth } from "./api";
 
 type LoginPageProps = {
   onLoginSuccess: (user: AuthUser, password: string) => void;
@@ -12,6 +12,13 @@ export function LoginPage({ onLoginSuccess, onGoToRegister }: LoginPageProps) {
   const [password, setPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const auth = getStoredAuth();
+    if (auth) {
+      onLoginSuccess(auth.user, auth.password);
+    }
+  }, [onLoginSuccess]);
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
@@ -103,4 +110,3 @@ export function LoginPage({ onLoginSuccess, onGoToRegister }: LoginPageProps) {
     </div>
   );
 }
-

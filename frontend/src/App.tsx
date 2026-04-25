@@ -14,13 +14,6 @@ import {
 import { SchedulePage } from "./SchedulePage";
 import { LoginPage } from "./LoginPage";
 import { RegisterPage } from "./RegisterPage";
-import { IntroductionPage } from "./pages/IntroductionPage";
-import { AboutUsPage } from "./pages/AboutUsPage";
-import { LegalPage } from "./pages/LegalPage";
-import { WhyChooseUsPage } from "./pages/WhyChooseUsPage";
-import { WhatSetsUsApartPage } from "./pages/WhatSetsUsApartPage";
-import { ClientelePage } from "./pages/ClientelePage";
-import { GalleryPage } from "./pages/GalleryPage";
 import { NavBar } from "./components/NavBar";
 
 export default function App() {
@@ -62,7 +55,7 @@ export default function App() {
     const m = path.match(/^\/schedule\/(\d+)\/?$/);
 
     if (path === "/" || path === "") {
-      setRouteView("introduction");
+      setRouteView("login");
       setRouteTournamentId(null);
     } else if (path === "/login" || path === "/login/") {
       setRouteView("login");
@@ -226,13 +219,6 @@ export default function App() {
     <div className="page">
       <NavBar currentPath={routeView} onNavigate={navigate} />
       <div className="card">
-        {routeView === "introduction" && <IntroductionPage />}
-        {routeView === "about-us" && <AboutUsPage />}
-        {routeView === "legal" && <LegalPage />}
-        {routeView === "why-choose-us" && <WhyChooseUsPage />}
-        {routeView === "what-sets-us-apart" && <WhatSetsUsApartPage />}
-        {routeView === "clientele" && <ClientelePage />}
-        {routeView === "gallery" && <GalleryPage />}
         {routeView === "login" && (
           <LoginPage
             onLoginSuccess={handleLoginSuccess}
