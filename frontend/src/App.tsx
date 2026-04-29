@@ -16,6 +16,8 @@ import { SchedulePage } from "./SchedulePage";
 import { LoginPage } from "./LoginPage";
 import { RegisterPage } from "./RegisterPage";
 import { NavBar } from "./components/NavBar";
+import { AdminPage } from "./AdminPage";
+import { MyMatchesPage } from "./MyMatchesPage";
 
 export default function App() {
   const [error, setError] = useState<string | null>(null);
@@ -43,6 +45,8 @@ export default function App() {
     | "what-sets-us-apart"
     | "clientele"
     | "gallery"
+    | "admin"
+    | "admin-matches"
   >("introduction");
   const [routeTournamentId, setRouteTournamentId] = useState<number | null>(null);
   const [authSession, setAuthSession] = useState<{
@@ -91,6 +95,12 @@ export default function App() {
       setRouteTournamentId(null);
     } else if (path === "/gallery" || path === "/gallery/") {
       setRouteView("gallery");
+      setRouteTournamentId(null);
+    } else if (path === "/admin" || path === "/admin/" || path === "/admin/organisers" || path === "/admin/organisers/") {
+      setRouteView("admin");
+      setRouteTournamentId(null);
+    } else if (path === "/admin/matches" || path === "/admin/matches/") {
+      setRouteView("admin-matches");
       setRouteTournamentId(null);
     } else {
       setRouteView("introduction");
@@ -235,7 +245,11 @@ export default function App() {
 
   return (
     <div className="page">
-      <NavBar currentPath={routeView} onNavigate={navigate} />
+      <NavBar
+        currentPath={routeView}
+        onNavigate={navigate}
+        isAdmin={isAuthed && authSession.user.username === "admin"}
+      />
       <div className="card">
         {routeView === "login" && (
           <LoginPage
@@ -272,8 +286,24 @@ export default function App() {
               onGoToRegister={() => navigate("/register")}
             />
           ))}
+        {routeView === "admin" &&
+          (isAuthed && authSession.user.username === "admin" ? (
+            <AdminPage />
+          ) : (
+            <div className="section">
+              <p className="error">You do not have permission to view this page.</p>
+            </div>
+          ))}
+        {routeView === "admin-matches" &&
+          (isAuthed && authSession.user.username === "admin" ? (
+            <MyMatchesPage />
+          ) : (
+            <div className="section">
+              <p className="error">You do not have permission to view this page.</p>
+            </div>
+          ))}
         {isAuthed && routeView !== "introduction" && (
-          <div className="sectionBody" style={{ marginTop: "1rem" }}>
+          <div className="sectionBody" style={{ marginTop: "1rem", display: "flex", gap: "1rem" }}>
             <button className="toggleButton" onClick={handleLogout}>
               Log out
             </button>

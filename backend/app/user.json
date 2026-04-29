@@ -3,8 +3,16 @@
         "id": 1,
         "organiser_id": 142060,
         "username": "admin",
-        "password": "$pbkdf2-sha256$29000$i9Fa6x1DyBkDQMjZO6f0fg$kDZ6EjWZIIoCRRfV7zWSxC45tUc8JAbMMjyy2T3/Cus",
+        "password": "$pbkdf2-sha256$29000$TKm1thYCQKg1xpgzplRKaQ$uA1dBmKEN5jKONJbYaI6BwFQJrxrhsX3IcLDwY/Rp6Q",
         "email": "theoval.sportszone@gmail.com",
         "mobile": "8439122448"
+    },
+    {
+        "id": 2,
+        "organiser_id": 16460,
+        "username": "maya",
+        "password": "$pbkdf2-sha256$29000$/z8nhNBaC0GIce49B8C4tw$NpFQ5TnFX1CIxn8fRf1BdAsxRdMqAFz3Px2.MMHApFY",
+        "email": "theoval.sportszone@gmail.com",
+        "mobile": "8767844556"
     }
 ]

@@ -11,9 +11,10 @@ const NAV_ITEMS: NavItem[] = [
 type NavBarProps = {
   currentPath: string;
   onNavigate: (path: string) => void;
+  isAdmin?: boolean;
 };
 
-export function NavBar({ currentPath, onNavigate }: NavBarProps) {
+export function NavBar({ currentPath, onNavigate, isAdmin }: NavBarProps) {
   const collapseRef = useRef<HTMLDivElement>(null);
 
   const collapseNavbar = () => {
@@ -23,6 +24,13 @@ export function NavBar({ currentPath, onNavigate }: NavBarProps) {
     document
       .querySelector<HTMLButtonElement>('[data-bs-target="#navbarNav"]')
       ?.setAttribute("aria-expanded", "false");
+
+    // Close any open dropdowns
+    el.querySelectorAll(".dropdown-menu.show").forEach(menu => menu.classList.remove("show"));
+    el.querySelectorAll(".dropdown-toggle.show").forEach(toggle => {
+      toggle.classList.remove("show");
+      toggle.setAttribute("aria-expanded", "false");
+    });
   };
 
   const handleNavigate = (path: string) => {
@@ -69,6 +77,26 @@ export function NavBar({ currentPath, onNavigate }: NavBarProps) {
                 </button>
               </li>
             ))}
+            {isAdmin && (
+              <li className="nav-item dropdown">
+                <button
+                  type="button"
+                  className={`nav-link btn btn-link nav-link-bright dropdown-toggle ${currentPath.startsWith("admin") ? "active" : ""}`}
+                  data-bs-toggle="dropdown"
+                  aria-expanded="false"
+                >
+                  Admin
+                </button>
+                <ul className="dropdown-menu dropdown-menu-end">
+                  <li>
+                    <button className="dropdown-item" onClick={() => handleNavigate("/admin/organisers")}>Organisers</button>
+                  </li>
+                  <li>
+                    <button className="dropdown-item" onClick={() => handleNavigate("/admin/matches")}>My Matches</button>
+                  </li>
+                </ul>
+              </li>
+            )}
           </ul>
         </div>
       </div>

@@ -201,3 +201,24 @@ export async function searchTeam(payload: any) {
 
   return response.json();
 }
+
+export type Organiser = {
+  id: number;
+  organiser_id: number;
+  username: string;
+  email: string;
+  mobile: string;
+};
+
+export async function getAdminOrganisers(): Promise<Organiser[]> {
+  const response = await fetch(`/api/admin/organisers`, withCricHeroesHeaders({
+    method: "GET",
+  }));
+
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    throw new Error(err.detail || "Failed to load organisers");
+  }
+
+  return response.json();
+}

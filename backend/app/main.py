@@ -109,7 +109,7 @@ class TeamSearchRequest(BaseModel):
 
 
 ALLOWED_ORGANISERS: list[dict[str, object]] = [
-    {"organiser_id": 142060, "username": "admin", "password": "s!xone"},
+    # {"organiser_id": 142060, "username": "admin", "password": "s!xone"},
     # {"organiser_id": 16460, "username": "admin", "password": "s!xone"},
 ]
 
@@ -118,8 +118,8 @@ ALLOWED_ORGANISERS: list[dict[str, object]] = [
 def register_user(payload: RegisterRequest):
     users = read_users()
     for u in users:
-        if u["organiser_id"] == payload.organiser_id and u["username"] == payload.username:
-            raise HTTPException(status_code=400, detail="User already exists for this organiser")
+        if u["username"] == payload.username:
+            raise HTTPException(status_code=400, detail="Username already exists")
 
     new_id = 1 if not users else max(u["id"] for u in users) + 1
     new_user = {
@@ -179,6 +179,18 @@ def login_user(payload: LoginRequest):
         "mobile": user["mobile"],
         "access_token": access_token,
     }
+
+@app.get("/api/admin/organisers")
+def list_organisers(current_user: dict = Depends(get_current_user)):
+    # Restrict this endpoint to the admin user
+    if current_user.get("sub") != "admin":
+        raise HTTPException(status_code=403, detail="Admin privileges required")
+    
+    users = read_users()
+    
+    # Filter out passwords before returning the list for security
+    safe_users = [{k: v for k, v in u.items() if k != "password"} for u in users]
+    return safe_users
 
 app.add_middleware(
     CORSMiddleware,
