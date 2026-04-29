@@ -271,7 +271,7 @@ async def get_tournaments(
         if name is not None and tournament_id is not None:
             result.append({"id": tournament_id, "name": name  })
 
-    return result
+    return sorted(result, key=lambda item: item["id"], reverse=True)
 
 
 class TournamentMatchesRequest(BaseModel):
@@ -578,4 +578,3 @@ if FRONTEND_DIST.exists():
             if index_file.exists():
                 return FileResponse(index_file)
         raise exc
-
