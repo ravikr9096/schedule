@@ -47,7 +47,7 @@ export default function App() {
   const [routeTournamentId, setRouteTournamentId] = useState<number | null>(null);
   const [authSession, setAuthSession] = useState<{
     user: AuthUser;
-    password: string;
+    access_token: string;
   } | null>(() => getStoredAuth());
 
   const isAuthed = !!authSession;
@@ -114,9 +114,6 @@ export default function App() {
 
     if (teamSearchQuery.trim()) {
       searchTeam({
-        organizer_id: authSession.user.organisation_id,
-        username: authSession.user.username,
-        password: authSession.password,
         team_name: teamSearchQuery.trim(),
       })
         .then((data: any) => {
@@ -132,11 +129,7 @@ export default function App() {
           setLoadingTournaments(false);
         });
     } else {
-      getTournaments({
-        organizer_id: authSession.user.organisation_id,
-        username: authSession.user.username,
-        password: authSession.password,
-      })
+      getTournaments()
         .then((data) => {
           if (cancelled) return;
           setTournaments(data);
@@ -220,15 +213,15 @@ export default function App() {
     }
   }
 
-  function handleLoginSuccess(user: AuthUser, password: string) {
-    const session = { user, password };
+  function handleLoginSuccess(user: AuthUser) {
+    const session = { user, access_token: user.access_token! };
     setAuthSession(session);
     setStoredAuth(session);
     navigate("/schedule");
   }
 
-  function handleRegisterSuccess(user: AuthUser, password: string) {
-    const session = { user, password };
+  function handleRegisterSuccess(user: AuthUser) {
+    const session = { user, access_token: user.access_token! };
     setAuthSession(session);
     setStoredAuth(session);
     navigate("/schedule");

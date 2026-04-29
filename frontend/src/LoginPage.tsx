@@ -2,12 +2,12 @@ import { FormEvent, useState, useEffect } from "react";
 import { login, AuthUser, getStoredAuth } from "./api";
 
 type LoginPageProps = {
-  onLoginSuccess: (user: AuthUser, password: string) => void;
+  onLoginSuccess: (user: AuthUser) => void;
   onGoToRegister: () => void;
 };
 
 export function LoginPage({ onLoginSuccess, onGoToRegister }: LoginPageProps) {
-  const [organisationIdInput, setOrganisationIdInput] = useState("142060");
+  const [organiserIdInput, setOrganiserIdInput] = useState("142060");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -16,7 +16,7 @@ export function LoginPage({ onLoginSuccess, onGoToRegister }: LoginPageProps) {
   useEffect(() => {
     const auth = getStoredAuth();
     if (auth) {
-      onLoginSuccess(auth.user, auth.password);
+      onLoginSuccess(auth.user);
     }
   }, [onLoginSuccess]);
 
@@ -24,9 +24,9 @@ export function LoginPage({ onLoginSuccess, onGoToRegister }: LoginPageProps) {
     e.preventDefault();
     setError(null);
 
-    const organisationId = Number(organisationIdInput);
-    if (!Number.isFinite(organisationId) || organisationId <= 0) {
-      setError("Please enter a valid organisation id");
+    const organiserId = Number(organiserIdInput);
+    if (!Number.isFinite(organiserId) || organiserId <= 0) {
+      setError("Please enter a valid organiser id");
       return;
     }
 
@@ -38,11 +38,11 @@ export function LoginPage({ onLoginSuccess, onGoToRegister }: LoginPageProps) {
     try {
       setSubmitting(true);
       const user = await login({
-        organisation_id: organisationId,
+        organiser_id: organiserId,
         username: username.trim(),
         password,
       });
-      onLoginSuccess(user, password);
+      onLoginSuccess(user);
     } catch (e) {
       const msg =
         e instanceof Error ? e.message : "Login failed. Please check your details.";
@@ -61,11 +61,11 @@ export function LoginPage({ onLoginSuccess, onGoToRegister }: LoginPageProps) {
         <div className="sectionBodyDetails">
           <div className="sectionBody">
             <label className="udidLabel">
-              Organisation ID
+              Organiser ID
               <input
                 className="udidInput"
-                value={organisationIdInput}
-                onChange={(e) => setOrganisationIdInput(e.target.value)}
+                value={organiserIdInput}
+                onChange={(e) => setOrganiserIdInput(e.target.value)}
               />
             </label>
           </div>

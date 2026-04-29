@@ -6,12 +6,15 @@ from starlette.requests import Request
 from starlette.exceptions import HTTPException as StarletteHTTPException
 import httpx
 import asyncio
+import json
+import os
 from pydantic import BaseModel
 import itertools
 from pathlib import Path
-from sqlalchemy import Column, Integer, String, create_engine, UniqueConstraint
-from sqlalchemy.orm import declarative_base, sessionmaker, Session
 from passlib.context import CryptContext
+import jwt
+from datetime import datetime, timedelta, timezone
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 
 # CricHeroes API headers (used for tournament and match endpoints)
 CRICHEROES_API_KEY = "cr!CkH3r0s"
@@ -43,43 +46,40 @@ app = FastAPI(title="FastAPI Backend", version="0.1.0")
 # Database & auth helpers
 # ------------------------
 
-DATABASE_URL = "sqlite:///./app.db"
-
-engine = create_engine(
-    DATABASE_URL, connect_args={"check_same_thread": False}
-)
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-Base = declarative_base()
-
 # Use PBKDF2-SHA256 to avoid bcrypt's 72-byte password limit / backend issues
 pwd_context = CryptContext(schemes=["pbkdf2_sha256"], deprecated="auto")
 
+USER_FILE = "user.json"
 
-class User(Base):
-    __tablename__ = "users"
+SECRET_KEY = "your-super-secret-jwt-key"
+ALGORITHM = "HS256"
+security = HTTPBearer()
 
-    id = Column(Integer, primary_key=True, index=True)
-    organisation_id = Column(Integer, index=True, nullable=False)
-    username = Column(String(100), nullable=False)
-    password_hash = Column(String(255), nullable=False)
-    email = Column(String(255), nullable=False)
-    mobile = Column(String(50), nullable=False)
+def create_access_token(data: dict, expires_delta: timedelta | None = None):
+    to_encode = data.copy()
+    expire = datetime.now(timezone.utc) + (expires_delta or timedelta(days=7))
+    to_encode.update({"exp": expire})
+    return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
-    __table_args__ = (
-        UniqueConstraint(
-            "organisation_id",
-            "username",
-            name="uq_user_org_username",
-        ),
-    )
-
-
-def get_db() -> Session:
-    db = SessionLocal()
+def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)):
     try:
-        yield db
-    finally:
-        db.close()
+        payload = jwt.decode(credentials.credentials, SECRET_KEY, algorithms=[ALGORITHM])
+        return payload
+    except jwt.PyJWTError:
+        raise HTTPException(status_code=401, detail="Invalid or expired token")
+
+def read_users() -> list[dict]:
+    if not os.path.exists(USER_FILE):
+        return []
+    with open(USER_FILE, "r") as f:
+        try:
+            return json.load(f)
+        except json.JSONDecodeError:
+            return []
+
+def write_users(users: list[dict]):
+    with open(USER_FILE, "w") as f:
+        json.dump(users, f, indent=4)
 
 
 def hash_password(password: str) -> str:
@@ -90,12 +90,8 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
     return pwd_context.verify(plain_password, hashed_password)
 
 
-# Create tables if they don't exist
-Base.metadata.create_all(bind=engine)
-
-
 class RegisterRequest(BaseModel):
-    organisation_id: int
+    organiser_id: int
     username: str
     password: str
     email: str
@@ -103,82 +99,85 @@ class RegisterRequest(BaseModel):
 
 
 class LoginRequest(BaseModel):
-    organisation_id: int
-    username: str
-    password: str
-
-
-class TournamentsRequest(BaseModel):
-    organizer_id: int
+    organiser_id: int
     username: str
     password: str
 
 
 class TeamSearchRequest(BaseModel):
-    organizer_id: int
-    username: str
-    password: str
     team_name: str
 
 
-ALLOWED_ORGANIZERS: list[dict[str, object]] = [
-    {"organizer_id": 142060, "username": "admin", "password": "s!xone"},
-    {"organizer_id": 16460, "username": "admin", "password": "s!xone"},
+ALLOWED_ORGANISERS: list[dict[str, object]] = [
+    {"organiser_id": 142060, "username": "admin", "password": "s!xone"},
+    # {"organiser_id": 16460, "username": "admin", "password": "s!xone"},
 ]
 
 
 @app.post("/api/auth/register")
-def register_user(payload: RegisterRequest, db: Session = Depends(get_db)):
-    existing = (
-        db.query(User)
-        .filter(
-            User.organisation_id == payload.organisation_id,
-            User.username == payload.username,
-        )
-        .first()
-    )
-    if existing is not None:
-        raise HTTPException(status_code=400, detail="User already exists for this organisation")
+def register_user(payload: RegisterRequest):
+    users = read_users()
+    for u in users:
+        if u["organiser_id"] == payload.organiser_id and u["username"] == payload.username:
+            raise HTTPException(status_code=400, detail="User already exists for this organiser")
 
-    user = User(
-        organisation_id=payload.organisation_id,
-        username=payload.username,
-        password_hash=hash_password(payload.password),
-        email=payload.email,
-        mobile=payload.mobile,
+    new_id = 1 if not users else max(u["id"] for u in users) + 1
+    new_user = {
+        "id": new_id,
+        "organiser_id": payload.organiser_id,
+        "username": payload.username,
+        "password": hash_password(payload.password),
+        "email": payload.email,
+        "mobile": payload.mobile,
+    }
+    users.append(new_user)
+    write_users(users)
+
+    access_token = create_access_token(
+        data={"sub": new_user["username"], "org": new_user["organiser_id"]}
     )
-    db.add(user)
-    db.commit()
-    db.refresh(user)
 
     return {
-        "id": user.id,
-        "organisation_id": user.organisation_id,
-        "username": user.username,
-        "email": user.email,
-        "mobile": user.mobile,
+        "id": new_user["id"],
+        "organiser_id": new_user["organiser_id"],
+        "username": new_user["username"],
+        "email": new_user["email"],
+        "mobile": new_user["mobile"],
+        "access_token": access_token,
     }
 
 
 @app.post("/api/auth/login")
-def login_user(payload: LoginRequest, db: Session = Depends(get_db)):
-    user = (
-        db.query(User)
-        .filter(
-            User.organisation_id == payload.organisation_id,
-            User.username == payload.username,
-        )
-        .first()
-    )
-    if user is None or not verify_password(payload.password, user.password_hash):
-        raise HTTPException(status_code=401, detail="Invalid username, password, or organisation")
+def login_user(payload: LoginRequest):
+    users = read_users()
+    user = next((u for u in users if u["organiser_id"] == payload.organiser_id and u["username"] == payload.username), None)
+    
+    is_valid = False
+    if user is not None and verify_password(payload.password, user["password"]):
+        is_valid = True
+    else:
+        # Fall back to legacy hard-coded combos for backward compatibility
+        if any(
+            payload.organiser_id == allowed["organiser_id"]
+            and payload.username == allowed["username"]
+            and payload.password == allowed["password"]
+            for allowed in ALLOWED_ORGANISERS
+        ):
+            is_valid = True
+            user = {"id": 0, "organiser_id": payload.organiser_id, "username": payload.username, "email": "", "mobile": ""}
+
+    if not is_valid or user is None:
+        raise HTTPException(status_code=401, detail="Invalid username, password, or organiser")
+
+    access_token = create_access_token(data={"sub": user["username"], "org": user["organiser_id"]})
 
     return {
-        "id": user.id,
-        "organisation_id": user.organisation_id,
-        "username": user.username,
-        "email": user.email,
-        "mobile": user.mobile,
+        "id": user["id"],
+        "organiser_id": user["organiser_id"],
+        "username": user["username"],
+        "email": user["email"],
+        "mobile": user["mobile"],
+        "access_token": access_token,
     }
 
 app.add_middleware(
@@ -195,35 +194,15 @@ app.add_middleware(
 
 @app.post("/api/tournaments")
 async def get_tournaments(
-    payload: TournamentsRequest,
+    current_user: dict = Depends(get_current_user),
     api_key: str | None = Header(default=None, alias="api-key"),
     device_type: str | None = Header(default=None, alias="device-type"),
     udid: str | None = Header(default=None, alias="udid"),
-    db: Session = Depends(get_db),
 ):
-    # Validate organizer/username/password combination against registered users
-    user = (
-        db.query(User)
-        .filter(
-            User.organisation_id == payload.organizer_id,
-            User.username == payload.username,
-        )
-        .first()
-    )
-    if user is None or not verify_password(payload.password, user.password_hash):
-        # Fall back to legacy hard-coded combos for backward compatibility
-        combo_ok = any(
-            payload.organizer_id == allowed["organizer_id"]
-            and payload.username == allowed["username"]
-            and payload.password == allowed["password"]
-            for allowed in ALLOWED_ORGANIZERS
-        )
-        if not combo_ok:
-            raise HTTPException(status_code=401, detail="Invalid organizer credentials")
-
+    organiser_id = current_user["org"]
     url = (
         "https://api.cricheroes.in/api/v1/organizer/"
-        f"get-tournament-organizer-tournaments/{payload.organizer_id}"
+        f"get-tournament-organizer-tournaments/{organiser_id}"
         "?pagesize=50&pageno=1"
     )
     params = {"pageno": 1, "pagesize": 50}
@@ -569,34 +548,16 @@ async def get_remaining_fixtures(
 @app.post("/api/search-team")
 async def search_team(
     payload: TeamSearchRequest,
+    current_user: dict = Depends(get_current_user),
     api_key: str | None = Header(default=None, alias="api-key"),
     device_type: str | None = Header(default=None, alias="device-type"),
     udid: str | None = Header(default=None, alias="udid"),
-    db: Session = Depends(get_db),
 ):
-    # Validate credentials
-    user = (
-        db.query(User)
-        .filter(
-            User.organisation_id == payload.organizer_id,
-            User.username == payload.username,
-        )
-        .first()
-    )
-    if user is None or not verify_password(payload.password, user.password_hash):
-        combo_ok = any(
-            payload.organizer_id == allowed["organizer_id"]
-            and payload.username == allowed["username"]
-            and payload.password == allowed["password"]
-            for allowed in ALLOWED_ORGANIZERS
-        )
-        if not combo_ok:
-            raise HTTPException(status_code=401, detail="Invalid organizer credentials")
-
+    organiser_id = current_user["org"]
     # 1. Fetch live tournaments
     url = (
         "https://api.cricheroes.in/api/v1/organizer/"
-        f"get-tournament-organizer-tournaments/{payload.organizer_id}"
+        f"get-tournament-organizer-tournaments/{organiser_id}"
         "?pagesize=50&pageno=1"
     )
     headers = _upstream_headers(api_key, device_type, udid)

@@ -2,7 +2,7 @@ import { FormEvent, useState } from "react";
 import { register, AuthUser } from "./api";
 
 type RegisterPageProps = {
-  onRegisterSuccess: (user: AuthUser, password: string) => void;
+  onRegisterSuccess: (user: AuthUser) => void;
   onGoToLogin: () => void;
 };
 
@@ -10,7 +10,7 @@ export function RegisterPage({
   onRegisterSuccess,
   onGoToLogin,
 }: RegisterPageProps) {
-  const [organisationIdInput, setOrganisationIdInput] = useState("142060");
+  const [organiserIdInput, setOrganiserIdInput] = useState("142060");
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [mobile, setMobile] = useState("");
@@ -22,9 +22,9 @@ export function RegisterPage({
     e.preventDefault();
     setError(null);
 
-    const organisationId = Number(organisationIdInput);
-    if (!Number.isFinite(organisationId) || organisationId <= 0) {
-      setError("Please enter a valid organisation id");
+    const organiserId = Number(organiserIdInput);
+    if (!Number.isFinite(organiserId) || organiserId <= 0) {
+      setError("Please enter a valid organiser id");
       return;
     }
 
@@ -36,13 +36,13 @@ export function RegisterPage({
     try {
       setSubmitting(true);
       const user = await register({
-        organisation_id: organisationId,
+        organiser_id: organiserId,
         username: username.trim(),
         password,
         email: email.trim(),
         mobile: mobile.trim(),
       });
-      onRegisterSuccess(user, password);
+      onRegisterSuccess(user);
     } catch (e) {
       const msg =
         e instanceof Error
@@ -63,11 +63,11 @@ export function RegisterPage({
         <div className="sectionBodyDetails">
           <div className="sectionBody">
             <label className="udidLabel">
-              Organisation ID
+              Organiser ID
               <input
                 className="udidInput"
-                value={organisationIdInput}
-                onChange={(e) => setOrganisationIdInput(e.target.value)}
+                value={organiserIdInput}
+                onChange={(e) => setOrganiserIdInput(e.target.value)}
               />
             </label>
           </div>
@@ -129,4 +129,3 @@ export function RegisterPage({
     </div>
   );
 }
-

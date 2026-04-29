@@ -24,10 +24,13 @@ function withCricHeroesHeaders(init?: RequestInit): RequestInit {
   };
 
   const extra = init?.headers ?? {};
+  const auth = getStoredAuth();
+  const authorizationHeader: Record<string, string> = auth?.access_token ? { Authorization: `Bearer ${auth.access_token}` } : {};
+
   const mergedHeaders =
     extra instanceof Headers
-      ? new Headers({ ...baseHeaders, ...Object.fromEntries(extra.entries()) })
-      : { ...baseHeaders, ...(extra as Record<string, string>) };
+      ? new Headers({ ...baseHeaders, ...authorizationHeader, ...Object.fromEntries(extra.entries()) })
+      : { ...baseHeaders, ...authorizationHeader, ...(extra as Record<string, string>) };
 
   return { ...init, headers: mergedHeaders };
 }
@@ -42,19 +45,11 @@ export async function getHello(): Promise<{ message: string }> {
 
 export type Tournament = { id: number; name: string };
 
-export type TournamentsAuth = {
-  organizer_id: number;
-  username: string;
-  password: string;
-};
-
-export async function getTournaments(auth: TournamentsAuth): Promise<Tournament[]> {
+export async function getTournaments(): Promise<Tournament[]> {
   const res = await fetch(
     "/api/tournaments",
     withCricHeroesHeaders({
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(auth),
     })
   );
   if (!res.ok) {
@@ -65,14 +60,15 @@ export async function getTournaments(auth: TournamentsAuth): Promise<Tournament[
 
 export type AuthUser = {
   id: number;
-  organisation_id: number;
+  organiser_id: number;
   username: string;
   email: string;
   mobile: string;
+  access_token?: string;
 };
 
 export type LoginPayload = {
-  organisation_id: number;
+  organiser_id: number;
   username: string;
   password: string;
 };
@@ -84,7 +80,7 @@ export type RegisterPayload = LoginPayload & {
 
 type AuthSession = {
   user: AuthUser;
-  password: string;
+  access_token: string;
 };
 
 const AUTH_STORAGE_KEY = "schedule.auth";
@@ -190,13 +186,13 @@ export async function getRemainingFixtures(
 }
 export async function searchTeam(payload: any) {
   // Use the same API_BASE URL path configuration you already have inside api.ts
-  const response = await fetch("http://localhost:8000/api/search-team", {
+  const response = await fetch(`api/search-team`,
+    withCricHeroesHeaders({
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(payload),
-  });
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ team_name: payload.team_name }),
+    })
+  );
 
   if (!response.ok) {
     const err = await response.json().catch(() => ({}));
