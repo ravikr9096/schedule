@@ -5,6 +5,7 @@ from fastapi.responses import FileResponse
 from starlette.requests import Request
 from starlette.exceptions import HTTPException as StarletteHTTPException
 import httpx
+import asyncio
 from pydantic import BaseModel
 import itertools
 from pathlib import Path
@@ -111,6 +112,13 @@ class TournamentsRequest(BaseModel):
     organizer_id: int
     username: str
     password: str
+
+
+class TeamSearchRequest(BaseModel):
+    organizer_id: int
+    username: str
+    password: str
+    team_name: str
 
 
 ALLOWED_ORGANIZERS: list[dict[str, object]] = [
@@ -556,6 +564,101 @@ async def get_remaining_fixtures(
         "remaining_fixtures": extracted["remaining_fixtures"],
         "team_opponents": extracted["team_opponents"],
     }
+
+
+@app.post("/api/search-team")
+async def search_team(
+    payload: TeamSearchRequest,
+    api_key: str | None = Header(default=None, alias="api-key"),
+    device_type: str | None = Header(default=None, alias="device-type"),
+    udid: str | None = Header(default=None, alias="udid"),
+    db: Session = Depends(get_db),
+):
+    # Validate credentials
+    user = (
+        db.query(User)
+        .filter(
+            User.organisation_id == payload.organizer_id,
+            User.username == payload.username,
+        )
+        .first()
+    )
+    if user is None or not verify_password(payload.password, user.password_hash):
+        combo_ok = any(
+            payload.organizer_id == allowed["organizer_id"]
+            and payload.username == allowed["username"]
+            and payload.password == allowed["password"]
+            for allowed in ALLOWED_ORGANIZERS
+        )
+        if not combo_ok:
+            raise HTTPException(status_code=401, detail="Invalid organizer credentials")
+
+    # 1. Fetch live tournaments
+    url = (
+        "https://api.cricheroes.in/api/v1/organizer/"
+        f"get-tournament-organizer-tournaments/{payload.organizer_id}"
+        "?pagesize=50&pageno=1"
+    )
+    headers = _upstream_headers(api_key, device_type, udid)
+
+    async with httpx.AsyncClient(timeout=30) as client:
+        try:
+            response = await client.get(url, headers=headers)
+            response.raise_for_status()
+        except httpx.RequestError as exc:
+            raise HTTPException(status_code=502, detail=f"Upstream request failed: {exc}") from exc
+
+        data = response.json()
+        tournaments = data.get("data") or data.get("tournaments") or data.get("items") or []
+
+        live_tournaments = []
+        for item in tournaments:
+            if not isinstance(item, dict): continue
+            status = item.get("status")
+            is_live = False
+            if isinstance(status, str):
+                is_live = status.strip().lower() in {"live"}
+            elif isinstance(status, int):
+                is_live = status == 1
+
+            if is_live:
+                t_id = item.get("tournament_id") or item.get("id") or item.get("tournamentId")
+                t_name = item.get("name") or item.get("tournament_name") or item.get("title")
+                if t_id and t_name:
+                    live_tournaments.append({"id": t_id, "name": t_name})
+
+        search_query = payload.team_name.lower()
+        matching_results = []
+
+        async def check_tournament(t):
+            match_url = "https://api.cricheroes.in/api/v1/match/get-tournament-matches/3/-1/-1"
+            try:
+                played_resp, upcoming_resp = await asyncio.gather(
+                    client.get(match_url, params={"tournamentid": t["id"], "pagesize": 100, "pageno": 1, "status": 3}, headers=headers),
+                    client.get(match_url, params={"tournamentid": t["id"], "pagesize": 100, "pageno": 1, "status": 2}, headers=headers)
+                )
+                if played_resp.status_code == 200 and upcoming_resp.status_code == 200:
+                    p_data = played_resp.json()
+                    u_data = upcoming_resp.json()
+                    p_matches = p_data.get("data") or p_data.get("matches") or p_data.get("items") or []
+                    u_matches = u_data.get("data") or u_data.get("matches") or u_data.get("items") or []
+                    extracted = _extract_remaining_from_played_matches(t["id"], p_matches, u_matches)
+                    matched_teams = [team for team in extracted["teams"] if search_query in team.lower()]
+                    if matched_teams:
+                        return {"tournament": t, "matched_teams": matched_teams}
+            except Exception:
+                pass
+            return None
+
+        results = await asyncio.gather(*(check_tournament(t) for t in live_tournaments))
+        for res in results:
+            if res:
+                matching_results.append(res)
+
+        return {
+            "team_search": payload.team_name,
+            "results": matching_results
+        }
 
 
 # Serve built React frontend from ../frontend/dist if it exists

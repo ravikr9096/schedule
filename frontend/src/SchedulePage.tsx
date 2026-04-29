@@ -1,3 +1,4 @@
+import { FormEvent, useState } from "react";
 import { Tournament, TeamOpponent } from "./api";
 
 type SchedulePageProps = {
@@ -11,6 +12,7 @@ type SchedulePageProps = {
   teamOpponents: Record<string, TeamOpponent[]> | null;
   onSelectTournament: (t: Tournament) => void;
   onBackToList: () => void;
+  onSearchTeam: (teamName: string) => void;
 };
 
 export function SchedulePage({
@@ -24,7 +26,15 @@ export function SchedulePage({
   teamOpponents,
   onSelectTournament,
   onBackToList,
+  onSearchTeam,
 }: SchedulePageProps) {
+  const [teamSearchInput, setTeamSearchInput] = useState("");
+
+  function handleSearch(e: FormEvent) {
+    e.preventDefault();
+    onSearchTeam(teamSearchInput);
+  }
+
   return (
     <>
       <h1>Tournaments</h1>
@@ -34,6 +44,36 @@ export function SchedulePage({
       {routeTournamentId == null ? (
         <div className="section">
           <h2>All tournaments</h2>
+
+                <form
+                  onSubmit={handleSearch}
+                  style={{ display: "flex", gap: "0.5rem", marginBottom: "1rem" }}
+                >
+                  <input
+                    type="text"
+                    className="udidInput"
+                    style={{ flex: 1 }}
+                    placeholder="Search by team name..."
+                    value={teamSearchInput}
+                    onChange={(e) => setTeamSearchInput(e.target.value)}
+                  />
+                  <button className="toggleButton" type="submit" disabled={loadingTournaments}>
+                    Search
+                  </button>
+                  {teamSearchInput && (
+                    <button
+                      className="linkButton"
+                      type="button"
+                      onClick={() => {
+                        setTeamSearchInput("");
+                        onSearchTeam("");
+                      }}
+                    >
+                      Clear
+                    </button>
+                  )}
+                </form>
+
           {loadingTournaments ? (
             <p className="muted">Loading tournaments…</p>
           ) : tournaments.length === 0 ? (
@@ -99,4 +139,3 @@ export function SchedulePage({
     </>
   );
 }
-

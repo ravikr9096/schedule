@@ -10,6 +10,7 @@ import {
   getStoredAuth,
   setStoredAuth,
   clearStoredAuth,
+  searchTeam,
 } from "./api";
 import { SchedulePage } from "./SchedulePage";
 import { LoginPage } from "./LoginPage";
@@ -22,6 +23,7 @@ export default function App() {
   const [loadingTournaments, setLoadingTournaments] = useState(false);
   const [udidInput, setUdidInput] = useState<string>(() => getUdid());
   const [udidVersion, setUdidVersion] = useState(0);
+  const [teamSearchQuery, setTeamSearchQuery] = useState("");
 
   const [selectedTournament, setSelectedTournament] = useState<Tournament | null>(
     null
@@ -109,27 +111,50 @@ export default function App() {
     let cancelled = false;
     setLoadingTournaments(true);
     setError(null);
-    getTournaments({
-      organizer_id: authSession.user.organisation_id,
-      username: authSession.user.username,
-      password: authSession.password,
-    })
-      .then((data) => {
-        if (cancelled) return;
-        setTournaments(data);
+
+    if (teamSearchQuery.trim()) {
+      searchTeam({
+        organizer_id: authSession.user.organisation_id,
+        username: authSession.user.username,
+        password: authSession.password,
+        team_name: teamSearchQuery.trim(),
       })
-      .catch((e: unknown) => {
-        if (cancelled) return;
-        setError(e instanceof Error ? e.message : String(e));
+        .then((data: any) => {
+          if (cancelled) return;
+          setTournaments(data.results.map((r: any) => r.tournament));
+        })
+        .catch((e: unknown) => {
+          if (cancelled) return;
+          setError(e instanceof Error ? e.message : String(e));
+        })
+        .finally(() => {
+          if (cancelled) return;
+          setLoadingTournaments(false);
+        });
+    } else {
+      getTournaments({
+        organizer_id: authSession.user.organisation_id,
+        username: authSession.user.username,
+        password: authSession.password,
       })
-      .finally(() => {
-        if (cancelled) return;
-        setLoadingTournaments(false);
-      });
+        .then((data) => {
+          if (cancelled) return;
+          setTournaments(data);
+        })
+        .catch((e: unknown) => {
+          if (cancelled) return;
+          setError(e instanceof Error ? e.message : String(e));
+        })
+        .finally(() => {
+          if (cancelled) return;
+          setLoadingTournaments(false);
+        });
+    }
+
     return () => {
       cancelled = true;
     };
-  }, [isAuthed, authSession]);
+  }, [isAuthed, authSession, teamSearchQuery]);
 
   useEffect(() => {
     syncRoute();
@@ -246,6 +271,7 @@ export default function App() {
               onBackToList={() => {
                 navigate("/schedule");
               }}
+              onSearchTeam={setTeamSearchQuery}
             />
           ) : (
             <LoginPage
@@ -264,4 +290,3 @@ export default function App() {
     </div>
   );
 }
-

@@ -188,3 +188,20 @@ export async function getRemainingFixtures(
   }
   return res.json();
 }
+export async function searchTeam(payload: any) {
+  // Use the same API_BASE URL path configuration you already have inside api.ts
+  const response = await fetch("http://localhost:8000/api/search-team", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    throw new Error(err.detail || "Failed to search teams");
+  }
+
+  return response.json();
+}
