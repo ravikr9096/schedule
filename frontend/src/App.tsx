@@ -244,13 +244,13 @@ export default function App() {
   }
 
   return (
-    <div className="page">
+    <div className="d-flex flex-column min-vh-100 bg-light pb-5">
       <NavBar
         currentPath={routeView}
         onNavigate={navigate}
         isAdmin={isAuthed && authSession.user.username === "admin"}
       />
-      <div className="card">
+      <main className="container flex-grow-1 mt-4">
         {routeView === "login" && (
           <LoginPage
             onLoginSuccess={handleLoginSuccess}
@@ -291,7 +291,7 @@ export default function App() {
             <AdminPage />
           ) : (
             <div className="section">
-              <p className="error">You do not have permission to view this page.</p>
+              <p className="alert alert-danger">You do not have permission to view this page.</p>
             </div>
           ))}
         {routeView === "admin-matches" &&
@@ -299,17 +299,17 @@ export default function App() {
             <MyMatchesPage />
           ) : (
             <div className="section">
-              <p className="error">You do not have permission to view this page.</p>
+              <p className="alert alert-danger">You do not have permission to view this page.</p>
             </div>
           ))}
         {isAuthed && routeView !== "introduction" && (
-          <div className="sectionBody" style={{ marginTop: "1rem", display: "flex", gap: "1rem" }}>
-            <button className="toggleButton" onClick={handleLogout}>
+          <div className="mt-4 d-flex justify-content-center">
+            <button className="btn btn-outline-danger" onClick={handleLogout}>
               Log out
             </button>
           </div>
         )}
-      </div>
+      </main>
     </div>
   );
 }

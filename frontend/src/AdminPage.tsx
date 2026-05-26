@@ -31,43 +31,45 @@ export function AdminPage() {
   }, []);
 
   return (
-    <div className="section">
-      <div className="sectionHeader">
-        <h1>Admin: Organisers</h1>
+    <div className="card shadow-sm mt-4">
+      <div className="card-header bg-white">
+        <h1 className="h3 mb-0">Admin: Organisers</h1>
       </div>
       
-      {error && <p className="error">Error: {error}</p>}
+      <div className="card-body">
+      {error && <div className="alert alert-danger">Error: {error}</div>}
       
       {loading ? (
-        <p className="muted">Loading organisers...</p>
+        <p className="text-muted">Loading organisers...</p>
       ) : organisers.length === 0 ? (
-        <p className="muted">No organisers found.</p>
+        <p className="text-muted">No organisers found.</p>
       ) : (
-        <div className="sectionBody" style={{ overflowX: "auto" }}>
-          <table className="list" style={{ width: "100%", textAlign: "left", borderCollapse: "collapse" }}>
-            <thead>
+        <div className="table-responsive">
+          <table className="table table-striped table-hover align-middle">
+            <thead className="table-light">
               <tr>
-                <th style={{ padding: "8px", borderBottom: "1px solid #ccc" }}>ID</th>
-                <th style={{ padding: "8px", borderBottom: "1px solid #ccc" }}>Organiser ID</th>
-                <th style={{ padding: "8px", borderBottom: "1px solid #ccc" }}>Username</th>
-                <th style={{ padding: "8px", borderBottom: "1px solid #ccc" }}>Email</th>
-                <th style={{ padding: "8px", borderBottom: "1px solid #ccc" }}>Mobile</th>
+                <th>ID</th>
+                <th>Organiser ID</th>
+                <th>Username</th>
+                <th>Email</th>
+                <th>Mobile</th>
               </tr>
             </thead>
             <tbody>
               {organisers.map((org) => (
                 <tr key={org.id}>
-                  <td style={{ padding: "8px", borderBottom: "1px solid #eee" }}>{org.id}</td>
-                  <td style={{ padding: "8px", borderBottom: "1px solid #eee" }}>{org.organiser_id}</td>
-                  <td style={{ padding: "8px", borderBottom: "1px solid #eee" }}>{org.username}</td>
-                  <td style={{ padding: "8px", borderBottom: "1px solid #eee" }}>{org.email}</td>
-                  <td style={{ padding: "8px", borderBottom: "1px solid #eee" }}>{org.mobile}</td>
+                  <td>{org.id}</td>
+                  <td>{org.organiser_id}</td>
+                  <td>{org.username}</td>
+                  <td>{org.email}</td>
+                  <td>{org.mobile}</td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
       )}
+      </div>
     </div>
   );
 }

@@ -53,60 +53,60 @@ export function LoginPage({ onLoginSuccess, onGoToRegister }: LoginPageProps) {
   }
 
   return (
-    <div className="section">
-      <div className="sectionHeader">
-        <h1>Login</h1>
+    <div className="card shadow-sm mt-4">
+      <div className="card-header bg-white">
+        <h1 className="h3 mb-0">Login</h1>
       </div>
-      <form className="udidForm" onSubmit={onSubmit}>
-        <div className="sectionBodyDetails">
-          <div className="sectionBody">
-            <label className="udidLabel">
+      <div className="card-body">
+        <form onSubmit={onSubmit}>
+          <div className="mb-3">
+            <label className="form-label">
               Organiser ID
+            </label>
               <input
-                className="udidInput"
+                className="form-control"
                 value={organiserIdInput}
                 onChange={(e) => setOrganiserIdInput(e.target.value)}
               />
-            </label>
           </div>
-          <div className="sectionBody">
-            <label className="udidLabel">
+          <div className="mb-3">
+            <label className="form-label">
               Username
+            </label>
               <input
-                className="udidInput"
+                className="form-control"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
               />
-            </label>
           </div>
-          <div className="sectionBody">
-            <label className="udidLabel">
+          <div className="mb-3">
+            <label className="form-label">
               Password
+            </label>
               <input
                 type="password"
-                className="udidInput"
+                className="form-control"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
               />
-            </label>
           </div>
-          {error ? <p className="error">{error}</p> : null}
-          <div className="sectionBody">
-            <button className="toggleButton" type="submit" disabled={submitting}>
+          {error ? <p className="text-danger">{error}</p> : null}
+          <div className="d-grid mb-3">
+            <button className="btn btn-primary" type="submit" disabled={submitting}>
               {submitting ? "Logging in…" : "Log in"}
             </button>
           </div>
-          <div className="sectionBody">
+          <div className="text-center">
             <button
               type="button"
-              className="linkButton"
+              className="btn btn-link"
               onClick={onGoToRegister}
             >
               Don&apos;t have an account? Register
             </button>
           </div>
-        </div>
-      </form>
+        </form>
+      </div>
     </div>
   );
 }

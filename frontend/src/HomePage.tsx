@@ -15,19 +15,19 @@ export function HomePage({ onGoToSchedule, onNavigate }: Props) {
   ];
 
   return (
-    <div className="section">
-      <h1>Welcome To Six One Productions</h1>
-      <button className="toggleButton" onClick={onGoToSchedule}>
+    <div className="container mt-5 text-center">
+      <h1 className="display-4 mb-4 fw-bold">Welcome To Six One Productions</h1>
+      <button className="btn btn-primary btn-lg px-5 rounded-pill shadow-sm" onClick={onGoToSchedule}>
         View schedule
       </button>
-      <nav className="mt-4">
+      <nav className="mt-5 mx-auto" style={{ maxWidth: '400px' }}>
         <p className="mb-2 small text-muted">Pages</p>
-        <ul className="list-group list-group-flush">
+        <ul className="list-group shadow-sm">
           {pageLinks.map(({ path, label }) => (
-            <li key={path} className="list-group-item bg-transparent border-0 px-0">
+            <li key={path} className="list-group-item list-group-item-action p-0">
               <button
                 type="button"
-                className="btn btn-link linkButton p-0 text-start"
+                className="btn w-100 text-start p-3 text-decoration-none"
                 onClick={() => onNavigate(path)}
               >
                 {label}
@@ -39,4 +39,3 @@ export function HomePage({ onGoToSchedule, onNavigate }: Props) {
     </div>
   );
 }
-

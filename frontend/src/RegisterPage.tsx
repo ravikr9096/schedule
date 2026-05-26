@@ -55,77 +55,77 @@ export function RegisterPage({
   }
 
   return (
-    <div className="section">
-      <div className="sectionHeader">
-        <h1>Register</h1>
+    <div className="card shadow-sm mt-4">
+      <div className="card-header bg-white">
+        <h1 className="h3 mb-0">Register</h1>
       </div>
-      <form className="udidForm" onSubmit={onSubmit}>
-        <div className="sectionBodyDetails">
-          <div className="sectionBody">
-            <label className="udidLabel">
+      <div className="card-body">
+        <form onSubmit={onSubmit}>
+          <div className="mb-3">
+            <label className="form-label">
               Organiser ID
+            </label>
               <input
-                className="udidInput"
+                className="form-control"
                 value={organiserIdInput}
                 onChange={(e) => setOrganiserIdInput(e.target.value)}
               />
-            </label>
           </div>
-          <div className="sectionBody">
-            <label className="udidLabel">
+          <div className="mb-3">
+            <label className="form-label">
               Username
+            </label>
               <input
-                className="udidInput"
+                className="form-control"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
               />
-            </label>
           </div>
-          <div className="sectionBody">
-            <label className="udidLabel">
+          <div className="mb-3">
+            <label className="form-label">
               Email
+            </label>
               <input
                 type="email"
-                className="udidInput"
+                className="form-control"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
               />
-            </label>
           </div>
-          <div className="sectionBody">
-            <label className="udidLabel">
+          <div className="mb-3">
+            <label className="form-label">
               Mobile
+            </label>
               <input
-                className="udidInput"
+                className="form-control"
                 value={mobile}
                 onChange={(e) => setMobile(e.target.value)}
               />
-            </label>
           </div>
-          <div className="sectionBody">
-            <label className="udidLabel">
+          <div className="mb-3">
+            <label className="form-label">
               Password
+            </label>
               <input
                 type="password"
-                className="udidInput"
+                className="form-control"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
               />
-            </label>
           </div>
-          {error ? <p className="error">{error}</p> : null}
-          <div className="sectionBody">
-            <button className="toggleButton" type="submit" disabled={submitting}>
+          {error ? <p className="text-danger">{error}</p> : null}
+          <div className="d-grid mb-3">
+            <button className="btn btn-primary" type="submit" disabled={submitting}>
               {submitting ? "Registering…" : "Register"}
             </button>
           </div>
-          <div className="sectionBody">
-            <button type="button" className="linkButton" onClick={onGoToLogin}>
+          <div className="text-center">
+            <button type="button" className="btn btn-link" onClick={onGoToLogin}>
               Already have an account? Login
             </button>
           </div>
-        </div>
-      </form>
+        </form>
+      </div>
     </div>
   );
 }
