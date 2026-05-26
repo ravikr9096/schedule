@@ -186,7 +186,7 @@ export function SchedulePage({
                           <a target="_blank" href={`https://cricheroes.com/team-profile/${opp.id}/${ opp.name.replace(/\s+/g, '-').toLowerCase()}/matches`}>{label}</a>
                           {oppDetails && (
                             <span style={{ fontSize: "0.85rem", color: "#555" }}>
-                                ({oppDetails.name} - <a href={`tel:+91${oppDetails.mobile}`}>{oppDetails.mobile}</a>)
+                                ({oppDetails.name} - <a href={`tel:+91${oppDetails.mobile}`}>{oppDetails.mobile}</a> | <a href={`https://wa.me/91${String(oppDetails.mobile).replace(/\D/g, "")}`} target="_blank" rel="noopener noreferrer" style={{ color: "#25D366", textDecoration: "none", fontWeight: "600" }}>WhatsApp</a>)
                             </span>
                           )}
                           {opp.id && (
