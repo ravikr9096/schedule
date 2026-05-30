@@ -333,6 +333,7 @@ def _extract_remaining_from_played_matches(
     teams: set[str] = set()
     played_pairs: set[frozenset[str]] = set()
     upcoming_pairs: set[frozenset[str]] = set()
+    upcoming_match_details: dict[frozenset[str], dict] = {}
 
     team1_keys = ["team1_name", "team1", "home_team", "teamA", "team_a"]
     team2_keys = ["team2_name", "team2", "away_team", "teamB", "team_b"]
@@ -385,7 +386,9 @@ def _extract_remaining_from_played_matches(
 
             teams.add(team1)
             teams.add(team2)
-            upcoming_pairs.add(frozenset({team1, team2}))
+            pair = frozenset({team1, team2})
+            upcoming_pairs.add(pair)
+            upcoming_match_details[pair] = m
 
     all_pairs: set[frozenset[str]] = set()
     for a, b in itertools.combinations(sorted(teams), 2):
@@ -405,12 +408,22 @@ def _extract_remaining_from_played_matches(
     for f in remaining_fixtures:
         pair = frozenset({f["team1"], f["team2"]})
         is_upcoming = pair in upcoming_pairs
+        match_details = upcoming_match_details.get(pair, {})
+
+        date_str = match_details.get("date") or match_details.get("match_date")
+        time_str = match_details.get("time") or match_details.get("match_time")
+        datetime_str = match_details.get("datetime") or match_details.get("match_datetime")
+        match_start_time = match_details.get("match_start_time")
 
         team_opponents.setdefault(f["team1"], []).append(
             {
                 "name": f["team2"],
                 "id": name_to_id.get(f["team2"]),
                 "upcoming": is_upcoming,
+                "date": date_str,
+                "time": time_str,
+                "datetime": datetime_str,
+                "match_start_time": match_start_time,
             }
         )
         team_opponents.setdefault(f["team2"], []).append(
@@ -418,6 +431,10 @@ def _extract_remaining_from_played_matches(
                 "name": f["team1"],
                 "id": name_to_id.get(f["team1"]),
                 "upcoming": is_upcoming,
+                "date": date_str,
+                "time": time_str,
+                "datetime": datetime_str,
+                "match_start_time": match_start_time,
             }
         )
 
@@ -434,6 +451,14 @@ def _extract_remaining_from_played_matches(
                 # If any fixture between this pair is upcoming, keep upcoming=True
                 if opp.get("upcoming") or existing.get("upcoming"):
                     existing["upcoming"] = True
+                    if not existing.get("date") and opp.get("date"):
+                        existing["date"] = opp.get("date")
+                    if not existing.get("time") and opp.get("time"):
+                        existing["time"] = opp.get("time")
+                    if not existing.get("datetime") and opp.get("datetime"):
+                        existing["datetime"] = opp.get("datetime")
+                    if not existing.get("match_start_time") and opp.get("match_start_time"):
+                        existing["match_start_time"] = opp.get("match_start_time")
                 if existing.get("id") is None and opp.get("id") is not None:
                     existing["id"] = opp["id"]
         team_opponents[team] = sorted(

@@ -139,6 +139,13 @@ export type TeamOpponent = {
   name: string;
   id?: number | string | null;
   upcoming: boolean;
+  date?: string | null;
+  time?: string | null;
+  datetime?: string | null;
+  match_date?: string | null;
+  match_time?: string | null;
+  match_datetime?: string | null;
+  match_start_time?: string | number | null;
 };
 
 export type TournamentMatchesResponse = {

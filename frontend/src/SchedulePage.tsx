@@ -181,7 +181,42 @@ export function SchedulePage({
                     </div>
                     <ul className="list-group list-group-flush">
                     {teamOpponents[team].map((opp) => {
-                      const label = opp.upcoming ? `${opp.name} (upcoming)` : opp.name;
+                    let label = opp.name;
+                    if (opp.upcoming) {
+                      const oppAny = opp as any; // Safe cast in case type isn't updated in api.ts
+                      const dateStr = oppAny.date || oppAny.match_date;
+                      const timeStr = oppAny.time || oppAny.match_time;
+                      const datetime = oppAny.datetime || oppAny.match_datetime;
+                      const matchStartTime = oppAny.match_start_time;
+                      
+                      let dateTimeLabel = "";
+                      if (matchStartTime) {
+                        let dt: Date;
+                        if (typeof matchStartTime === "number") {
+                          dt = new Date(matchStartTime > 1e11 ? matchStartTime : matchStartTime * 1000);
+                        } else {
+                          let ds = matchStartTime;
+                          // Append 'Z' to treat as UTC if the time string does not include a timezone offset
+                          if (typeof ds === "string" && !ds.includes("Z") && !ds.includes("+")) {
+                            ds = ds.replace(" ", "T") + "Z";
+                          }
+                          dt = new Date(ds);
+                        }
+                        
+                        if (!isNaN(dt.getTime())) {
+                          dateTimeLabel = `: ${dt.toLocaleString("en-IN", { timeZone: "Asia/Kolkata", dateStyle: "medium", timeStyle: "short" })}`;
+                        } else {
+                          dateTimeLabel = `: ${matchStartTime}`;
+                        }
+                      } else if (dateStr || timeStr) {
+                        dateTimeLabel = `: ${[dateStr, timeStr].filter(Boolean).join(" ")}`;
+                      } else if (datetime) {
+                        const dt = new Date(datetime);
+                        dateTimeLabel = !isNaN(dt.getTime()) ? `: ${dt.toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })}` : `: ${datetime}`;
+                      }
+                      label = `${opp.name} (upcoming${dateTimeLabel})`;
+                    }
+
                       const upcomingClass = opp.upcoming ? "bg-warning bg-opacity-10" : "";
                       const oppDetails = opp.id ? teamDetails[Number(opp.id)] : null;
 
