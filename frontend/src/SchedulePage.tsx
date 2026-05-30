@@ -1,4 +1,4 @@
-import { FormEvent, useState, useEffect } from "react";
+import { FormEvent, useState, useEffect, useMemo } from "react";
 import { Tournament, TeamOpponent } from "./api";
 
 type SchedulePageProps = {
@@ -34,6 +34,36 @@ export function SchedulePage({
   const [teamContactName, setTeamContactName] = useState("");
   const [teamMobile, setTeamMobile] = useState("");
   const [isSubmittingDetails, setIsSubmittingDetails] = useState(false);
+  const [viewMode, setViewMode] = useState<"grouped" | "list">("grouped");
+
+  const uniqueMatches = useMemo(() => {
+    const matches: any[] = [];
+    if (teamOpponents) {
+      teamsSorted.forEach((team) => {
+        teamOpponents[team].forEach((opp) => {
+          // To avoid duplicates, only add when team name is alphabetically before opponent name
+          if (team < opp.name) {
+            const team1Details = teamOpponents[opp.name]?.find((o) => o.name === team);
+            matches.push({
+              team1: team,
+              team1Id: team1Details?.id,
+              team2: opp.name,
+              team2Id: opp.id,
+              upcoming: opp.upcoming,
+              date: (opp as any).date,
+              time: (opp as any).time,
+              datetime: (opp as any).datetime,
+              match_date: (opp as any).match_date,
+              match_time: (opp as any).match_time,
+              match_datetime: (opp as any).match_datetime,
+              match_start_time: (opp as any).match_start_time,
+            });
+          }
+        });
+      });
+    }
+    return matches;
+  }, [teamOpponents, teamsSorted]);
 
   useEffect(() => {
     // Fetch existing team details to display them
@@ -157,12 +187,28 @@ export function SchedulePage({
             <button className="btn btn-outline-primary btn-sm" onClick={onBackToList}>
               Back
             </button>
-            <h2 className="h4 mb-0">
+            <h2 className="h4 mb-0 flex-grow-1">
               Remaining fixtures{" "}
               {selectedTournament ? (
                 <span className="text-muted fs-6">({selectedTournament.name})</span>
               ) : null}
             </h2>
+            {teamOpponents && (
+              <div className="btn-group shadow-sm">
+                <button
+                  className={`btn btn-sm ${viewMode === "grouped" ? "btn-primary" : "btn-outline-primary"}`}
+                  onClick={() => setViewMode("grouped")}
+                >
+                  Grouped
+                </button>
+                <button
+                  className={`btn btn-sm ${viewMode === "list" ? "btn-primary" : "btn-outline-primary"}`}
+                  onClick={() => setViewMode("list")}
+                >
+                  List
+                </button>
+              </div>
+            )}
           </div>
 
           {loadingMatches ? (
@@ -171,7 +217,7 @@ export function SchedulePage({
             <p className="text-muted">No data.</p>
           ) : teamsSorted.length === 0 ? (
             <p className="text-muted">No remaining fixtures found.</p>
-          ) : (
+          ) : viewMode === "grouped" ? (
             <div className="row g-4">
               {teamsSorted.map((team) => (
                 <div key={team} className="col-md-6 col-lg-4">
@@ -267,6 +313,116 @@ export function SchedulePage({
                   </div>
                 </div>
               ))}
+            </div>
+          ) : (
+            <div className="row g-4">
+              {uniqueMatches.map((match, idx) => {
+                const dateStr = match.date || match.match_date;
+                const timeStr = match.time || match.match_time;
+                const datetime = match.datetime || match.match_datetime;
+                const matchStartTime = match.match_start_time;
+                
+                let dateTimeLabel = "";
+                if (matchStartTime) {
+                  let dt: Date;
+                  if (typeof matchStartTime === "number") {
+                    dt = new Date(matchStartTime > 1e11 ? matchStartTime : matchStartTime * 1000);
+                  } else {
+                    let ds = matchStartTime;
+                    if (typeof ds === "string" && !ds.includes("Z") && !ds.includes("+")) {
+                      ds = ds.replace(" ", "T") + "Z";
+                    }
+                    dt = new Date(ds);
+                  }
+                  
+                  if (!isNaN(dt.getTime())) {
+                    dateTimeLabel = dt.toLocaleString("en-IN", { timeZone: "Asia/Kolkata", dateStyle: "medium", timeStyle: "short" });
+                  } else {
+                    dateTimeLabel = `${matchStartTime}`;
+                  }
+                } else if (dateStr || timeStr) {
+                  dateTimeLabel = `${[dateStr, timeStr].filter(Boolean).join(" ")}`;
+                } else if (datetime) {
+                  const dt = new Date(datetime);
+                  dateTimeLabel = !isNaN(dt.getTime()) ? dt.toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' }) : `${datetime}`;
+                }
+
+                const upcomingClass = match.upcoming ? "bg-warning bg-opacity-10 border-warning" : "border-0";
+                const team1Contact = match.team1Id ? teamDetails[Number(match.team1Id)] : null;
+                const team2Contact = match.team2Id ? teamDetails[Number(match.team2Id)] : null;
+
+                return (
+                  <div key={idx} className="col-md-6 col-lg-4">
+                    <div className={`card h-100 shadow-sm ${upcomingClass}`}>
+                      <div className="card-body d-flex flex-column">
+                        <div className="d-flex justify-content-between align-items-center mb-3">
+                          <h5 className="card-title mb-0 text-primary text-truncate text-end" style={{flex: 1}} title={match.team1}>{match.team1}</h5>
+                          <span className="badge bg-secondary mx-2">VS</span>
+                          <h5 className="card-title mb-0 text-danger text-truncate text-start" style={{flex: 1}} title={match.team2}>{match.team2}</h5>
+                        </div>
+                        
+                        <div className="text-center mb-3 flex-grow-1">
+                          {match.upcoming ? (
+                             <span className="badge bg-warning text-dark mb-2">Upcoming</span>
+                          ) : (
+                             <span className="badge bg-success mb-2">Remaining</span>
+                          )}
+                          {dateTimeLabel && <div className="text-muted small">🕒 {dateTimeLabel}</div>}
+                        </div>
+
+                        <hr className="my-2" />
+
+                        <div className="d-flex justify-content-between align-items-start mt-2">
+                          <div className="d-flex flex-column align-items-center" style={{flex: 1}}>
+                            {match.team1Id ? (
+                              <>
+                                <a target="_blank" rel="noopener noreferrer" href={`https://cricheroes.com/team-profile/${match.team1Id}/${match.team1.replace(/\s+/g, '-').toLowerCase()}/matches`} className="text-decoration-none small mb-1">Profile</a>
+                                {team1Contact ? (
+                                  <div className="d-flex gap-2 align-items-center mt-1">
+                                    <span className="text-secondary small fw-medium" title={team1Contact.name}>{team1Contact.name.split(' ')[0]}</span>
+                                    <a className="text-decoration-none" title="Call" href={`tel:+91${team1Contact.mobile}`}>📞</a>
+                                    <a className="text-decoration-none" title="WhatsApp" href={`https://wa.me/91${String(team1Contact.mobile).replace(/\D/g, "")}`} target="_blank" rel="noopener noreferrer">💬</a>
+                                  </div>
+                                ) : (
+                                  <button className="btn btn-sm btn-link p-0 text-decoration-none" style={{fontSize: "0.75rem"}} onClick={() => {
+                                    setSelectedTeamForDetails({ id: Number(match.team1Id), teamName: match.team1 });
+                                    setTeamContactName("");
+                                    setTeamMobile("");
+                                  }}>Add Contact</button>
+                                )}
+                              </>
+                            ) : <span className="text-muted small">No Profile</span>}
+                          </div>
+
+                          <div className="border-end h-100 mx-1"></div>
+
+                          <div className="d-flex flex-column align-items-center" style={{flex: 1}}>
+                            {match.team2Id ? (
+                              <>
+                                <a target="_blank" rel="noopener noreferrer" href={`https://cricheroes.com/team-profile/${match.team2Id}/${match.team2.replace(/\s+/g, '-').toLowerCase()}/matches`} className="text-decoration-none small mb-1">Profile</a>
+                                {team2Contact ? (
+                                  <div className="d-flex gap-2 align-items-center mt-1">
+                                    <span className="text-secondary small fw-medium" title={team2Contact.name}>{team2Contact.name.split(' ')[0]}</span>
+                                    <a className="text-decoration-none" title="Call" href={`tel:+91${team2Contact.mobile}`}>📞</a>
+                                    <a className="text-decoration-none" title="WhatsApp" href={`https://wa.me/91${String(team2Contact.mobile).replace(/\D/g, "")}`} target="_blank" rel="noopener noreferrer">💬</a>
+                                  </div>
+                                ) : (
+                                  <button className="btn btn-sm btn-link p-0 text-decoration-none" style={{fontSize: "0.75rem"}} onClick={() => {
+                                    setSelectedTeamForDetails({ id: Number(match.team2Id), teamName: match.team2 });
+                                    setTeamContactName("");
+                                    setTeamMobile("");
+                                  }}>Add Contact</button>
+                                )}
+                              </>
+                            ) : <span className="text-muted small">No Profile</span>}
+                          </div>
+                        </div>
+
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
       )}
 
