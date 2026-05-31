@@ -18,6 +18,7 @@ SCOPES = [
 ]
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 SERVICE_ACCOUNT_FILE = os.path.join(BASE_DIR, 'service_account.json')
+RENDER_SECRET_FILE = '/etc/secrets/service_account.json'
 SHEET_ID = "1Vh7qBWyRE5-kWxBEUnmB3-BKrH36gjAls9n-fL1v65I"
 
 class MatchPayload(BaseModel):
@@ -36,7 +37,11 @@ def col_to_letter(col: int) -> str:
 
 def get_access_token():
     try:
-        if "GOOGLE_SERVICE_ACCOUNT_JSON" in os.environ:
+        if os.path.exists(RENDER_SECRET_FILE):
+            creds = service_account.Credentials.from_service_account_file(
+                RENDER_SECRET_FILE, scopes=SCOPES
+            )
+        elif "GOOGLE_SERVICE_ACCOUNT_JSON" in os.environ:
             creds_info = json.loads(os.environ["GOOGLE_SERVICE_ACCOUNT_JSON"])
             
             # Fix for Render escaping newlines in the private key
