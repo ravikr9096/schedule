@@ -190,7 +190,14 @@ export function SchedulePage({
             <h2 className="h4 mb-0 flex-grow-1">
               Remaining fixtures{" "}
               {selectedTournament ? (
-                <span className="text-muted fs-6">({selectedTournament.name})</span>
+                <a
+                  href={`https://cricheroes.com/tournament/${selectedTournament.id}/${selectedTournament.name.replace(/\s+/g, '-').toLowerCase()}/matches/live-matches`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-muted fs-6 text-decoration-none"
+                >
+                  ({selectedTournament.name})
+                </a>
               ) : null}
             </h2>
             {teamOpponents && (

@@ -247,7 +247,7 @@ export function SheetHandling() {
                               <svg className="me-1" style={{ color: colors.border }} width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
                               {m.ground}
                             </div>
-                            <div className="card-body py-1 px-1 mb-0 text-center d-flex flex-column justify-content-center">
+                            <div className="card-body py-0 px-0 mb-0 text-center d-flex flex-column justify-content-center">
                               <div className="fw-bold text-dark text-break" style={{ fontSize: '0.75rem' }} title={m.team_a}>{m.team_a || 'TBA'}</div>
                               <div className="text-muted my-0" style={{ fontSize: '0.6rem', fontWeight: 600 }}>VS</div>
                               <div className="fw-bold text-dark text-break" style={{ fontSize: '0.75rem' }} title={m.team_b}>{m.team_b || 'TBA'}</div>

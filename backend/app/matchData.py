@@ -41,6 +41,13 @@ def get_access_token():
             creds = service_account.Credentials.from_service_account_file(
                 RENDER_SECRET_FILE, scopes=SCOPES
             )
+        elif os.path.exists(SERVICE_ACCOUNT_FILE):
+            # Prefer local file over env var during local development
+            creds = service_account.Credentials.from_service_account_file(
+                SERVICE_ACCOUNT_FILE, scopes=SCOPES
+            )
+            print("Using local service_account.json")
+            print(creds)
         elif "GOOGLE_SERVICE_ACCOUNT_JSON" in os.environ:
             creds_info = json.loads(os.environ["GOOGLE_SERVICE_ACCOUNT_JSON"])
             
@@ -50,10 +57,6 @@ def get_access_token():
                 
             creds = service_account.Credentials.from_service_account_info(
                 creds_info, scopes=SCOPES
-            )
-        elif os.path.exists(SERVICE_ACCOUNT_FILE):
-            creds = service_account.Credentials.from_service_account_file(
-                SERVICE_ACCOUNT_FILE, scopes=SCOPES
             )
         else:
             raise HTTPException(status_code=500, detail="Service account credentials not found.")
