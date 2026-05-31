@@ -2,6 +2,7 @@ from fastapi import APIRouter, HTTPException
 import httpx
 import csv
 import re
+import json
 from io import StringIO
 import os
 from google.oauth2 import service_account
@@ -34,13 +35,19 @@ def col_to_letter(col: int) -> str:
     return letter
 
 def get_access_token():
-    if not os.path.exists(SERVICE_ACCOUNT_FILE):
-        raise HTTPException(status_code=500, detail="Service account credentials not found.")
-    
     try:
-        creds = service_account.Credentials.from_service_account_file(
-            SERVICE_ACCOUNT_FILE, scopes=SCOPES
-        )
+        if "GOOGLE_SERVICE_ACCOUNT_JSON" in os.environ:
+            creds_info = json.loads(os.environ["GOOGLE_SERVICE_ACCOUNT_JSON"])
+            creds = service_account.Credentials.from_service_account_info(
+                creds_info, scopes=SCOPES
+            )
+        elif os.path.exists(SERVICE_ACCOUNT_FILE):
+            creds = service_account.Credentials.from_service_account_file(
+                SERVICE_ACCOUNT_FILE, scopes=SCOPES
+            )
+        else:
+            raise HTTPException(status_code=500, detail="Service account credentials not found.")
+            
         request = google.auth.transport.requests.Request()
         creds.refresh(request)
         return creds.token
