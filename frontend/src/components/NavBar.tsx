@@ -89,6 +89,9 @@ export function NavBar({ currentPath, onNavigate, isAdmin }: NavBarProps) {
                 </button>
                 <ul className="dropdown-menu dropdown-menu-end">
                   <li>
+                    <button className="dropdown-item" onClick={() => handleNavigate("/sheet-handling")}>Calendar</button>
+                  </li>
+                  <li>
                     <button className="dropdown-item" onClick={() => handleNavigate("/admin/organisers")}>Organisers</button>
                   </li>
                   <li>

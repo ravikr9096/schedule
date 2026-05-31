@@ -18,6 +18,7 @@ import { RegisterPage } from "./RegisterPage";
 import { NavBar } from "./components/NavBar";
 import { AdminPage } from "./AdminPage";
 import { MyMatchesPage } from "./MyMatchesPage";
+import { SheetHandling } from "./sheetHandling";
 
 export default function App() {
   const [error, setError] = useState<string | null>(null);
@@ -47,6 +48,7 @@ export default function App() {
     | "gallery"
     | "admin"
     | "admin-matches"
+    | "sheet-handling"
   >("introduction");
   const [routeTournamentId, setRouteTournamentId] = useState<number | null>(null);
   const [authSession, setAuthSession] = useState<{
@@ -101,6 +103,9 @@ export default function App() {
       setRouteTournamentId(null);
     } else if (path === "/admin/matches" || path === "/admin/matches/") {
       setRouteView("admin-matches");
+      setRouteTournamentId(null);
+    } else if (path === "/sheet-handling" || path === "/sheet-handling/") {
+      setRouteView("sheet-handling");
       setRouteTournamentId(null);
     } else {
       setRouteView("introduction");
@@ -302,6 +307,9 @@ export default function App() {
               <p className="alert alert-danger">You do not have permission to view this page.</p>
             </div>
           ))}
+    {routeView === "sheet-handling" && (
+      <SheetHandling />
+    )}
         {isAuthed && routeView !== "introduction" && (
           <div className="mt-4 d-flex justify-content-center">
             <button className="btn btn-outline-danger" onClick={handleLogout}>

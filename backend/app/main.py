@@ -20,6 +20,11 @@ try:
     from team import router as team_router
 except ImportError:
     from .team import router as team_router
+    
+try:
+    from matchData import router as matchData_router
+except ImportError:
+    from .matchData import router as matchData_router
 
 # CricHeroes API headers (used for tournament and match endpoints)
 CRICHEROES_API_KEY = "cr!CkH3r0s"
@@ -46,6 +51,7 @@ def _upstream_headers(
 
 app = FastAPI(title="FastAPI Backend", version="0.1.0")
 app.include_router(team_router)
+app.include_router(matchData_router)
 
 
 # ------------------------
