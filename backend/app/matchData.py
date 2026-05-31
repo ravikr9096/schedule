@@ -38,6 +38,11 @@ def get_access_token():
     try:
         if "GOOGLE_SERVICE_ACCOUNT_JSON" in os.environ:
             creds_info = json.loads(os.environ["GOOGLE_SERVICE_ACCOUNT_JSON"])
+            
+            # Fix for Render escaping newlines in the private key
+            if "private_key" in creds_info:
+                creds_info["private_key"] = creds_info["private_key"].replace('\\n', '\n')
+                
             creds = service_account.Credentials.from_service_account_info(
                 creds_info, scopes=SCOPES
             )
