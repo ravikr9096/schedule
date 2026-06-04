@@ -28,3 +28,17 @@ npm run dev
 - Backend: `GET /health`, `GET /api/hello`
 - Frontend: loads data from `GET /api/hello`
 
+
+CREATE TABLE IF NOT EXISTS public.team_directory
+(
+    team_id integer,
+    name text COLLATE pg_catalog."default",
+    mobile text COLLATE pg_catalog."default",
+    id integer NOT NULL DEFAULT nextval('team_directory_id_seq'::regclass),
+    team_name text COLLATE pg_catalog."default",
+    CONSTRAINT team_directory_pkey PRIMARY KEY (id)
+)
+
+TABLESPACE pg_default;
+
+SELECT setval('team_directory_id_seq', (SELECT MAX(id) FROM team_directory));
