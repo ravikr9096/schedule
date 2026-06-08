@@ -296,13 +296,15 @@ export function SheetHandling() {
                           );
                         })
                       )}
-                      <button 
-                        className="btn btn-sm w-100 mt-1 p-0 text-light shadow-sm" 
-                        style={{ fontSize: '0.7rem', borderStyle: 'dashed', borderWidth: '1px', backgroundColor: 'transparent', borderColor: '#6c757d' }}
-                        onClick={() => openAddModal(date, slot)}
-                      >
-                        + Add Match
-                      </button>
+                      {matches.length < sheetGrounds.length && (
+                        <button 
+                          className="btn btn-sm w-100 mt-1 p-0 text-light shadow-sm" 
+                          style={{ fontSize: '0.7rem', borderStyle: 'dashed', borderWidth: '1px', backgroundColor: 'transparent', borderColor: '#6c757d' }}
+                          onClick={() => openAddModal(date, slot)}
+                        >
+                          + Add Match
+                        </button>
+                      )}
                     </td>
                   );
                 })}
