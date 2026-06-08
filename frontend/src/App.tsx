@@ -249,13 +249,40 @@ export default function App() {
   }
 
   return (
-    <div className="d-flex flex-column min-vh-100 bg-light pb-5">
+    <div className="d-flex flex-column min-vh-100 pb-5" style={{ backgroundColor: '#121416', color: '#f8f9fa' }}>
+      <style>{`
+        .navbar {
+          background-color: #1a1d20 !important;
+          border-bottom: 1px solid #fd7e14 !important;
+        }
+        .navbar .navbar-brand, .navbar .nav-link, .navbar a {
+          color: #f8f9fa !important;
+          text-decoration: none !important;
+        }
+        .navbar .nav-link:hover, .navbar .nav-link.active, .navbar a:hover {
+          color: #fd7e14 !important;
+        }
+        .navbar-toggler {
+          border-color: rgba(253, 126, 20, 0.5) !important;
+        }
+        .navbar-toggler-icon {
+          background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='%23fd7e14' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e") !important;
+        }
+        .form-control:focus, .form-select:focus, .btn:focus, .navbar-toggler:focus {
+          border-color: #fd7e14 !important;
+          box-shadow: 0 0 0 0.25rem rgba(253, 126, 20, 0.25) !important;
+        }
+        ::placeholder {
+          color: #adb5bd !important;
+          opacity: 1 !important;
+        }
+      `}</style>
       <NavBar
         currentPath={routeView}
         onNavigate={navigate}
         isAdmin={isAuthed && authSession.user.username === "admin"}
       />
-      <main className="container flex-grow-1 mt-4">
+      <main className="container-fluid px-2 px-md-4 py-3 flex-grow-1 d-flex flex-column" style={{ maxWidth: '1400px' }}>
         {routeView === "login" && (
           <LoginPage
             onLoginSuccess={handleLoginSuccess}

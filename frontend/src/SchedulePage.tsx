@@ -122,94 +122,98 @@ export function SchedulePage({
   }
 
   return (
-    <div className="container mt-4">
-      <h1 className="mb-4">Tournaments</h1>
+    <div className="w-100">
 
       {error ? <div className="alert alert-danger">Error: {error}</div> : null}
 
       {routeTournamentId == null ? (
-        <div className="card shadow-sm">
-          <div className="card-body">
-            <h2 className="card-title h4 mb-4">All tournaments</h2>
+        <div className="card shadow-lg border-0 rounded-4" style={{ backgroundColor: '#1a1d20', borderColor: '#fd7e14' }}>
+          <div className="card-body p-4">
+            <h2 className="card-title h3 mb-4 fw-bold text-white">All Tournaments</h2>
 
                 <form
                   onSubmit={handleSearch}
-              className="d-flex gap-2 mb-4"
+                  className="d-flex flex-column flex-sm-row gap-2 mb-4"
                 >
                   <input
                     type="text"
-                className="form-control"
+                    className="form-control form-control-lg border-0 rounded-pill px-4 text-white"
+                    style={{ backgroundColor: '#2b3035' }}
                     placeholder="Search by team name..."
                     value={teamSearchInput}
                     onChange={(e) => setTeamSearchInput(e.target.value)}
                   />
-              <button className="btn btn-primary px-4" type="submit" disabled={loadingTournaments}>
-                    Search
-                  </button>
-                  {teamSearchInput && (
-                    <button
-                  className="btn btn-outline-secondary"
-                      type="button"
-                      onClick={() => {
-                        setTeamSearchInput("");
-                        onSearchTeam("");
-                      }}
-                    >
-                      Clear
+                  <div className="d-flex gap-2">
+                    <button className="btn btn-lg px-4 rounded-pill fw-bold shadow-sm" style={{ backgroundColor: '#fd7e14', borderColor: '#fd7e14', color: '#fff' }} type="submit" disabled={loadingTournaments}>
+                      Search
                     </button>
-                  )}
+                    {teamSearchInput && (
+                      <button
+                        className="btn btn-dark border-secondary btn-lg px-4 rounded-pill text-light fw-bold shadow-sm"
+                        type="button"
+                        onClick={() => {
+                          setTeamSearchInput("");
+                          onSearchTeam("");
+                        }}
+                      >
+                        Clear
+                      </button>
+                    )}
+                  </div>
                 </form>
 
           {loadingTournaments ? (
-            <p className="text-muted">Loading tournaments…</p>
+            <p className="text-light">Loading tournaments…</p>
           ) : tournaments.length === 0 ? (
-            <p className="text-muted">No tournaments found.</p>
+            <p className="text-light">No tournaments found.</p>
           ) : (
-            <ul className="list-group">
+            <div className="row g-3">
               {tournaments.map((t) => (
-                <li key={t.id} className="list-group-item d-flex justify-content-between align-items-center">
-                  <button
-                    className="btn btn-link text-decoration-none p-0 text-start"
-                    onClick={() => onSelectTournament(t)}
-                  >
-                    {t.name}
-                  </button>
-                  <span className="badge bg-secondary rounded-pill">#{t.id}</span>
-                </li>
+                <div className="col-12 col-md-6 col-lg-4" key={t.id}>
+                  <div className="card h-100 border shadow-sm tournament-card" onClick={() => onSelectTournament(t)} style={{cursor: 'pointer', borderRadius: '12px', transition: 'transform 0.15s, box-shadow 0.15s', backgroundColor: '#2b3035', borderColor: '#fd7e14'}}>
+                    <div className="card-body d-flex justify-content-between align-items-center">
+                      <div className="fw-bold text-white pe-2">{t.name}</div>
+                      <span className="badge bg-dark text-light border border-secondary rounded-pill">#{t.id}</span>
+                    </div>
+                  </div>
+                </div>
               ))}
-            </ul>
+            </div>
           )}
           </div>
         </div>
       ) : (
         <div>
           <div className="d-flex align-items-center gap-3 mb-4">
-            <button className="btn btn-outline-primary btn-sm" onClick={onBackToList}>
-              Back
+            <button className="btn btn-dark border-secondary shadow-sm btn-sm rounded-circle d-flex align-items-center justify-content-center" style={{ width: '36px', height: '36px', color: '#fd7e14' }} onClick={onBackToList} title="Back">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5"></path><polyline points="12 19 5 12 12 5"></polyline></svg>
             </button>
-            <h2 className="h4 mb-0 flex-grow-1">
-              Remaining fixtures{" "}
+            <h2 className="h4 mb-0 flex-grow-1 fw-bold text-white">
+              Remaining Fixtures{" "}
               {selectedTournament ? (
                 <a
                   href={`https://cricheroes.com/tournament/${selectedTournament.id}/${selectedTournament.name.replace(/\s+/g, '-').toLowerCase()}/matches/live-matches`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-muted fs-6 text-decoration-none"
+                  className="fs-6 text-decoration-none ms-2"
+                  style={{ color: '#fd7e14' }}
                 >
                   ({selectedTournament.name})
                 </a>
               ) : null}
             </h2>
             {teamOpponents && (
-              <div className="btn-group shadow-sm">
+              <div className="btn-group shadow-sm rounded-pill p-1 border border-secondary" style={{ backgroundColor: '#2b3035' }}>
                 <button
-                  className={`btn btn-sm ${viewMode === "grouped" ? "btn-primary" : "btn-outline-primary"}`}
+                  className={`btn btn-sm rounded-pill border-0 px-3 fw-medium ${viewMode === "grouped" ? "shadow-sm text-white" : "text-light bg-transparent"}`}
+                  style={viewMode === "grouped" ? { backgroundColor: '#fd7e14' } : {}}
                   onClick={() => setViewMode("grouped")}
                 >
                   Grouped
                 </button>
                 <button
-                  className={`btn btn-sm ${viewMode === "list" ? "btn-primary" : "btn-outline-primary"}`}
+                  className={`btn btn-sm rounded-pill border-0 px-3 fw-medium ${viewMode === "list" ? "shadow-sm text-white" : "text-light bg-transparent"}`}
+                  style={viewMode === "list" ? { backgroundColor: '#fd7e14' } : {}}
                   onClick={() => setViewMode("list")}
                 >
                   List
@@ -219,20 +223,20 @@ export function SchedulePage({
           </div>
 
           {loadingMatches ? (
-            <p className="text-muted">Loading remaining fixtures…</p>
+            <p className="text-light">Loading remaining fixtures…</p>
           ) : !teamOpponents ? (
-            <p className="text-muted">No data.</p>
+            <p className="text-light">No data.</p>
           ) : teamsSorted.length === 0 ? (
-            <p className="text-muted">No remaining fixtures found.</p>
+            <p className="text-light">No remaining fixtures found.</p>
           ) : viewMode === "grouped" ? (
-            <div className="row g-4">
+            <div className="row g-3">
               {teamsSorted.map((team) => (
                 <div key={team} className="col-md-6 col-lg-4">
-                  <div className="card h-100 shadow-sm border-0">
-                    <div className="card-header bg-light border-bottom-0 pt-3 pb-2">
-                      <h3 className="h6 mb-0 text-primary fw-bold">{team}</h3>
+                  <div className="card h-100 shadow-sm border rounded-4 overflow-hidden" style={{ backgroundColor: '#1a1d20', borderColor: '#fd7e14' }}>
+                    <div className="card-header border-bottom pt-3 pb-2 px-3" style={{ backgroundColor: '#2b3035', borderColor: '#fd7e14' }}>
+                      <h3 className="h6 mb-0 fw-bold" style={{ color: '#fd7e14' }}>{team}</h3>
                     </div>
-                    <ul className="list-group list-group-flush">
+                    <ul className="list-group list-group-flush bg-transparent">
                     {teamOpponents[team].map((opp) => {
                     let label = opp.name;
                     if (opp.upcoming) {
@@ -270,17 +274,17 @@ export function SchedulePage({
                       label = `${opp.name} (upcoming${dateTimeLabel})`;
                     }
 
-                      const upcomingClass = opp.upcoming ? "bg-warning bg-opacity-10" : "";
+                      const upcomingClass = opp.upcoming ? "bg-dark" : "";
                       const oppDetails = opp.id ? teamDetails[Number(opp.id)] : null;
 
                       return (
-                        <li key={opp.name} className={`list-group-item d-flex flex-column gap-2 ${upcomingClass}`}>
-                          <div className="d-flex justify-content-between align-items-center">
-                            <a className="text-decoration-none fw-medium" target="_blank" rel="noopener noreferrer" href={`https://cricheroes.com/team-profile/${opp.id}/${ opp.name.replace(/\s+/g, '-').toLowerCase()}/matches`}>{label}</a>
+                        <li key={opp.name} className={`list-group-item border-0 border-bottom px-3 py-3 d-flex flex-column gap-2 ${upcomingClass}`} style={{ backgroundColor: 'transparent', borderColor: '#333' }}>
+                          <div className="d-flex justify-content-between align-items-start gap-2">
+                            <a className="text-decoration-none fw-bold text-white lh-sm" style={{fontSize: '0.9rem'}} target="_blank" rel="noopener noreferrer" href={`https://cricheroes.com/team-profile/${opp.id}/${ opp.name.replace(/\s+/g, '-').toLowerCase()}/matches`}>{label}</a>
                             {opp.id && (
                               <button
-                                className="btn btn-sm btn-outline-secondary py-0 px-2 d-flex align-items-center gap-1"
-                                style={{ fontSize: "0.75rem" }}
+                                className="btn btn-sm btn-dark border-secondary rounded-pill py-1 px-2 d-flex align-items-center gap-1 flex-shrink-0 text-light"
+                                style={{ fontSize: "0.7rem", fontWeight: 600 }}
                                 title={oppDetails ? "Edit Details" : "Add Details"}
                                 onClick={() => {
                                   setSelectedTeamForDetails({ id: Number(opp.id), teamName: opp.name });
@@ -304,12 +308,17 @@ export function SchedulePage({
                           </div>
                           
                           {oppDetails && (
-                            <div className="d-flex align-items-center gap-2" style={{ fontSize: "0.85rem" }}>
-                                <span className="text-secondary">{oppDetails.name}</span>
-                                <div className="ms-auto d-flex gap-2">
-                                  <a className="text-decoration-none text-primary fw-medium" href={`tel:+91${oppDetails.mobile}`}>📞 Call</a>
-                                  <span className="text-muted">|</span>
-                                  <a className="text-decoration-none fw-medium" style={{ color: "#25D366" }} href={`https://wa.me/91${String(oppDetails.mobile).replace(/\D/g, "")}`} target="_blank" rel="noopener noreferrer">💬 WhatsApp</a>
+                            <div className="d-flex align-items-center mt-1 p-2 rounded-3 border" style={{ fontSize: "0.8rem", backgroundColor: '#2b3035', borderColor: '#444' }}>
+                                <span className="text-light fw-medium text-truncate me-2" title={oppDetails.name}>{oppDetails.name.split(' ')[0]}</span>
+                                <div className="ms-auto d-flex gap-2 flex-shrink-0">
+                                  <a className="text-decoration-none fw-bold px-2 py-1 rounded d-flex align-items-center gap-1" style={{ color: '#fff', backgroundColor: '#fd7e14' }} href={`tel:+91${oppDetails.mobile}`}>
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+                                    Call
+                                  </a>
+                                  <a className="text-decoration-none fw-bold px-2 py-1 rounded d-flex align-items-center gap-1" style={{ color: "#fff", backgroundColor: "#25D366" }} href={`https://wa.me/91${String(oppDetails.mobile).replace(/\D/g, "")}`} target="_blank" rel="noopener noreferrer">
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
+                                    WhatsApp
+                                  </a>
                                 </div>
                             </div>
                           )}
@@ -322,7 +331,7 @@ export function SchedulePage({
               ))}
             </div>
           ) : (
-            <div className="row g-4">
+            <div className="row g-3">
               {uniqueMatches.map((match, idx) => {
                 const dateStr = match.date || match.match_date;
                 const timeStr = match.time || match.match_time;
@@ -354,74 +363,72 @@ export function SchedulePage({
                   dateTimeLabel = !isNaN(dt.getTime()) ? dt.toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' }) : `${datetime}`;
                 }
 
-                const upcomingClass = match.upcoming ? "bg-warning bg-opacity-10 border-warning" : "border-0";
+                const upcomingClass = match.upcoming ? "bg-dark border-secondary" : "border-secondary";
                 const team1Contact = match.team1Id ? teamDetails[Number(match.team1Id)] : null;
                 const team2Contact = match.team2Id ? teamDetails[Number(match.team2Id)] : null;
 
                 return (
                   <div key={idx} className="col-md-6 col-lg-4">
-                    <div className={`card h-100 shadow-sm ${upcomingClass}`}>
-                      <div className="card-body d-flex flex-column">
-                        <div className="d-flex justify-content-between align-items-center mb-3">
-                          <h5 className="card-title mb-0 text-primary text-truncate text-end" style={{flex: 1}} title={match.team1}>{match.team1}</h5>
-                          <span className="badge bg-secondary mx-2">VS</span>
-                          <h5 className="card-title mb-0 text-danger text-truncate text-start" style={{flex: 1}} title={match.team2}>{match.team2}</h5>
+                    <div className={`card h-100 shadow-sm border rounded-4 ${upcomingClass}`} style={{ backgroundColor: '#1a1d20' }}>
+                      <div className="card-body d-flex flex-column p-3">
+                        <div className="d-flex justify-content-between align-items-center mb-2">
+                          <div className="fw-bold text-white text-truncate text-end" style={{flex: 1, fontSize: '0.95rem'}} title={match.team1}>{match.team1}</div>
+                          <div className="badge bg-dark text-light border-secondary border mx-2 px-2 py-1 rounded-pill" style={{ fontSize: '0.65rem' }}>VS</div>
+                          <div className="fw-bold text-white text-truncate text-start" style={{flex: 1, fontSize: '0.95rem'}} title={match.team2}>{match.team2}</div>
                         </div>
                         
-                        <div className="text-center mb-3 flex-grow-1">
+                        <div className="text-center mb-2 flex-grow-1">
                           {match.upcoming ? (
-                             <span className="badge bg-warning text-dark mb-2">Upcoming</span>
+                             <span className="badge bg-warning text-dark mb-1 rounded-pill px-3" style={{ backgroundColor: '#fd7e14' }}>Upcoming</span>
                           ) : (
-                             <span className="badge bg-success mb-2">Remaining</span>
+                             <span className="badge bg-success text-white mb-1 rounded-pill px-3">Remaining</span>
                           )}
-                          {dateTimeLabel && <div className="text-muted small">🕒 {dateTimeLabel}</div>}
+                          {dateTimeLabel && <div className="text-light fw-medium" style={{fontSize: '0.75rem'}}>🕒 {dateTimeLabel}</div>}
                         </div>
 
-                        <hr className="my-2" />
-
-                        <div className="d-flex justify-content-between align-items-start mt-2">
-                          <div className="d-flex flex-column align-items-center" style={{flex: 1}}>
+                        <div className="rounded-3 border border-secondary p-2 mt-auto" style={{ backgroundColor: '#2b3035' }}>
+                          <div className="d-flex justify-content-between align-items-center">
+                            <div className="d-flex flex-column align-items-center" style={{flex: 1}}>
                             {match.team1Id ? (
                               <>
-                                <a target="_blank" rel="noopener noreferrer" href={`https://cricheroes.com/team-profile/${match.team1Id}/${match.team1.replace(/\s+/g, '-').toLowerCase()}/matches`} className="text-decoration-none small mb-1">Profile</a>
+                                <a target="_blank" rel="noopener noreferrer" href={`https://cricheroes.com/team-profile/${match.team1Id}/${match.team1.replace(/\s+/g, '-').toLowerCase()}/matches`} className="text-decoration-none fw-bold mb-1 text-warning" style={{fontSize: '0.75rem', color: '#fd7e14' }}>Profile</a>
                                 {team1Contact ? (
-                                  <div className="d-flex gap-2 align-items-center mt-1">
-                                    <span className="text-secondary small fw-medium" title={team1Contact.name}>{team1Contact.name.split(' ')[0]}</span>
-                                    <a className="text-decoration-none" title="Call" href={`tel:+91${team1Contact.mobile}`}>📞</a>
-                                    <a className="text-decoration-none" title="WhatsApp" href={`https://wa.me/91${String(team1Contact.mobile).replace(/\D/g, "")}`} target="_blank" rel="noopener noreferrer">💬</a>
+                                  <div className="d-flex gap-1 align-items-center justify-content-center">
+                                    <a className="text-decoration-none rounded-circle d-flex align-items-center justify-content-center" style={{width: '24px', height: '24px', backgroundColor: '#fd7e14', color: '#fff'}} title={`Call ${team1Contact.name}`} href={`tel:+91${team1Contact.mobile}`}>📞</a>
+                                    <a className="text-decoration-none rounded-circle d-flex align-items-center justify-content-center" style={{width: '24px', height: '24px', backgroundColor: '#E8F5E9'}} title={`WhatsApp ${team1Contact.name}`} href={`https://wa.me/91${String(team1Contact.mobile).replace(/\D/g, "")}`} target="_blank" rel="noopener noreferrer">💬</a>
                                   </div>
                                 ) : (
-                                  <button className="btn btn-sm btn-link p-0 text-decoration-none" style={{fontSize: "0.75rem"}} onClick={() => {
+                                  <button className="btn btn-sm btn-dark border-secondary rounded-pill px-2 py-0 text-light fw-medium" style={{fontSize: "0.65rem"}} onClick={() => {
                                     setSelectedTeamForDetails({ id: Number(match.team1Id), teamName: match.team1 });
                                     setTeamContactName("");
                                     setTeamMobile("");
                                   }}>Add Contact</button>
                                 )}
                               </>
-                            ) : <span className="text-muted small">No Profile</span>}
+                            ) : <span className="text-secondary" style={{fontSize: '0.7rem'}}>No Profile</span>}
                           </div>
 
                           <div className="border-end h-100 mx-1"></div>
 
-                          <div className="d-flex flex-column align-items-center" style={{flex: 1}}>
+                            <div className="d-flex flex-column align-items-center" style={{flex: 1}}>
                             {match.team2Id ? (
                               <>
-                                <a target="_blank" rel="noopener noreferrer" href={`https://cricheroes.com/team-profile/${match.team2Id}/${match.team2.replace(/\s+/g, '-').toLowerCase()}/matches`} className="text-decoration-none small mb-1">Profile</a>
+                                <a target="_blank" rel="noopener noreferrer" href={`https://cricheroes.com/team-profile/${match.team2Id}/${match.team2.replace(/\s+/g, '-').toLowerCase()}/matches`} className="text-decoration-none fw-bold mb-1 text-warning" style={{fontSize: '0.75rem', color: '#fd7e14'}}>Profile</a>
                                 {team2Contact ? (
-                                  <div className="d-flex gap-2 align-items-center mt-1">
-                                    <span className="text-secondary small fw-medium" title={team2Contact.name}>{team2Contact.name.split(' ')[0]}</span>
-                                    <a className="text-decoration-none" title="Call" href={`tel:+91${team2Contact.mobile}`}>📞</a>
-                                    <a className="text-decoration-none" title="WhatsApp" href={`https://wa.me/91${String(team2Contact.mobile).replace(/\D/g, "")}`} target="_blank" rel="noopener noreferrer">💬</a>
+                                  <div className="d-flex gap-1 align-items-center justify-content-center">
+                                    <a className="text-decoration-none rounded-circle d-flex align-items-center justify-content-center" style={{width: '24px', height: '24px', backgroundColor: '#fd7e14', color: '#fff'}} title={`Call ${team2Contact.name}`} href={`tel:+91${team2Contact.mobile}`}>📞</a>
+                                    <a className="text-decoration-none rounded-circle d-flex align-items-center justify-content-center" style={{width: '24px', height: '24px', backgroundColor: '#E8F5E9'}} title={`WhatsApp ${team2Contact.name}`} href={`https://wa.me/91${String(team2Contact.mobile).replace(/\D/g, "")}`} target="_blank" rel="noopener noreferrer">💬</a>
                                   </div>
                                 ) : (
-                                  <button className="btn btn-sm btn-link p-0 text-decoration-none" style={{fontSize: "0.75rem"}} onClick={() => {
+                                  <button className="btn btn-sm btn-dark border-secondary rounded-pill px-2 py-0 text-light fw-medium" style={{fontSize: "0.65rem"}} onClick={() => {
                                     setSelectedTeamForDetails({ id: Number(match.team2Id), teamName: match.team2 });
                                     setTeamContactName("");
                                     setTeamMobile("");
                                   }}>Add Contact</button>
                                 )}
                               </>
-                            ) : <span className="text-muted small">No Profile</span>}
+                            ) : <span className="text-secondary" style={{fontSize: '0.7rem'}}>No Profile</span>}
+                          </div>
                           </div>
                         </div>
 
@@ -437,24 +444,24 @@ export function SchedulePage({
       {selectedTeamForDetails && (
         <div className="modal d-block" style={{ backgroundColor: "rgba(0,0,0,0.5)" }} tabIndex={-1}>
           <div className="modal-dialog modal-dialog-centered">
-            <div className="modal-content">
-              <div className="modal-header">
-                <h5 className="modal-title">Details for {selectedTeamForDetails.teamName}</h5>
-                <button type="button" className="btn-close" onClick={() => setSelectedTeamForDetails(null)}></button>
+                <div className="modal-content border-0 shadow-lg rounded-4" style={{ backgroundColor: '#1a1d20', borderColor: '#fd7e14' }}>
+                  <div className="modal-header border-bottom-0 rounded-top-4 py-3" style={{ backgroundColor: '#2b3035' }}>
+                    <h5 className="modal-title fw-bold text-white fs-5">Details for {selectedTeamForDetails.teamName}</h5>
+                    <button type="button" className="btn-close btn-close-white" onClick={() => setSelectedTeamForDetails(null)}></button>
               </div>
-              <div className="modal-body">
+                  <div className="modal-body pt-2 pb-4 text-white">
                 <form onSubmit={handleAddTeamDetails}>
                   <div className="mb-3">
-                    <label className="form-label">Contact Name</label>
-                    <input type="text" className="form-control" value={teamContactName} onChange={(e) => setTeamContactName(e.target.value)} required />
+                        <label className="form-label small mb-1 fw-bold text-light">Contact Name</label>
+                        <input type="text" className="form-control form-control-sm border-secondary text-white" style={{ backgroundColor: '#2b3035' }} value={teamContactName} onChange={(e) => setTeamContactName(e.target.value)} required />
                   </div>
                   <div className="mb-3">
-                    <label className="form-label">Mobile Number</label>
-                    <input type="text" className="form-control" value={teamMobile} onChange={(e) => setTeamMobile(e.target.value)} required />
+                        <label className="form-label small mb-1 fw-bold text-light">Mobile Number</label>
+                        <input type="text" className="form-control form-control-sm border-secondary text-white" style={{ backgroundColor: '#2b3035' }} value={teamMobile} onChange={(e) => setTeamMobile(e.target.value)} required />
                   </div>
                   <div className="d-flex justify-content-end gap-2 mt-4">
-                    <button className="btn btn-outline-secondary" type="button" onClick={() => setSelectedTeamForDetails(null)}>Cancel</button>
-                    <button className="btn btn-primary" type="submit" disabled={isSubmittingDetails}>
+                        <button className="btn btn-sm btn-dark border-secondary px-3 rounded-pill" type="button" onClick={() => setSelectedTeamForDetails(null)}>Cancel</button>
+                        <button className="btn btn-sm px-4 rounded-pill fw-bold" style={{ backgroundColor: '#fd7e14', borderColor: '#fd7e14', color: '#fff' }} type="submit" disabled={isSubmittingDetails}>
                       {isSubmittingDetails ? "Saving..." : "Save"}
                     </button>
                   </div>

@@ -31,22 +31,22 @@ export function AdminPage() {
   }, []);
 
   return (
-    <div className="card shadow-sm mt-4">
-      <div className="card-header bg-white">
-        <h1 className="h3 mb-0">Admin: Organisers</h1>
+    <div className="card shadow-lg border mt-4" style={{ backgroundColor: '#1a1d20', borderColor: '#fd7e14', color: '#fff' }}>
+      <div className="card-header border-secondary">
+        <h1 className="h3 mb-0 text-white">Admin: Organisers</h1>
       </div>
       
       <div className="card-body">
       {error && <div className="alert alert-danger">Error: {error}</div>}
       
       {loading ? (
-        <p className="text-muted">Loading organisers...</p>
+        <p className="text-light">Loading organisers...</p>
       ) : organisers.length === 0 ? (
-        <p className="text-muted">No organisers found.</p>
+        <p className="text-light">No organisers found.</p>
       ) : (
         <div className="table-responsive">
-          <table className="table table-striped table-hover align-middle">
-            <thead className="table-light">
+          <table className="table table-dark table-striped table-hover align-middle mb-0">
+            <thead>
               <tr>
                 <th>ID</th>
                 <th>Organiser ID</th>

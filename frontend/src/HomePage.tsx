@@ -15,26 +15,28 @@ export function HomePage({ onGoToSchedule, onNavigate }: Props) {
   ];
 
   return (
-    <div className="container mt-5 text-center">
-      <h1 className="display-4 mb-4 fw-bold">Welcome To Six One Productions</h1>
-      <button className="btn btn-primary btn-lg px-5 rounded-pill shadow-sm" onClick={onGoToSchedule}>
-        View schedule
-      </button>
-      <nav className="mt-5 mx-auto" style={{ maxWidth: '400px' }}>
-        <p className="mb-2 small text-muted">Pages</p>
-        <ul className="list-group shadow-sm">
+    <div className="container-fluid px-2 px-md-4 mt-4 mt-md-5 text-center">
+      <div className="py-4 py-md-5 mb-4 rounded-4 shadow-lg border" style={{ backgroundColor: '#1a1d20', borderColor: '#fd7e14' }}>
+        <h1 className="display-5 mb-4 fw-bolder text-white" style={{ letterSpacing: '-1px' }}>Welcome To Six One Productions</h1>
+        <button className="btn btn-lg px-5 rounded-pill shadow fw-bold" style={{ backgroundColor: '#fd7e14', borderColor: '#fd7e14', color: '#fff' }} onClick={onGoToSchedule}>
+          View Schedule
+        </button>
+      </div>
+      <nav className="mx-auto" style={{ maxWidth: '800px' }}>
+        <div className="row g-3 justify-content-center">
           {pageLinks.map(({ path, label }) => (
-            <li key={path} className="list-group-item list-group-item-action p-0">
+            <div key={path} className="col-6 col-md-4">
               <button
                 type="button"
-                className="btn w-100 text-start p-3 text-decoration-none"
+                className="btn btn-dark w-100 py-3 shadow-sm rounded-4 fw-semibold text-white"
+                style={{ borderColor: '#fd7e14' }}
                 onClick={() => onNavigate(path)}
               >
                 {label}
               </button>
-            </li>
+            </div>
           ))}
-        </ul>
+        </div>
       </nav>
     </div>
   );

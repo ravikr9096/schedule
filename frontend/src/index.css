@@ -265,9 +265,8 @@ h2 {
 
 /* Bright navbar */
 .nav-bar-bright {
-  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #ec4899 100%) !important;
-  border-radius: 16px;
-  box-shadow: 0 4px 20px rgba(99, 102, 241, 0.35);
+  background: linear-gradient(135deg, #2e2d2b 0%, #fd7e14 50%, #211525 100%) !important;
+  box-shadow: 0 4px 20px rgb(233 152 68 / 35%);
 }
 
 .nav-bar-bright .nav-brand {
