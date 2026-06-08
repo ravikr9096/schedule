@@ -34,6 +34,7 @@ export function SheetHandling() {
   const [formGround, setFormGround] = useState("");
   const [formTeamA, setFormTeamA] = useState("");
   const [formTeamB, setFormTeamB] = useState("");
+  const [isEditMode, setIsEditMode] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
@@ -154,7 +155,40 @@ export function SheetHandling() {
     setFormGround("");
     setFormTeamA("");
     setFormTeamB("");
+    setIsEditMode(false);
     setIsModalOpen(true);
+  };
+
+  const openEditModal = (date: string, slot: string, ground: string, teamA: string, teamB: string) => {
+    setModalDate(date);
+    setModalSlot(slot);
+    setFormGround(ground);
+    setFormTeamA(teamA);
+    setFormTeamB(teamB);
+    setIsEditMode(true);
+    setIsModalOpen(true);
+  };
+
+  const handleDeleteMatch = async () => {
+    if (!confirm(`Are you sure you want to delete the match at ${formGround}?`)) return;
+    
+    setIsSubmitting(true);
+    try {
+      const res = await fetch(`/api/gsheet?date=${encodeURIComponent(modalDate)}&slot=${encodeURIComponent(modalSlot)}&ground=${encodeURIComponent(formGround)}`, {
+        method: "DELETE"
+      });
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(text || `HTTP error! status: ${res.status}`);
+      }
+      const newDataRes = await fetch("/api/gsheet");
+      if (newDataRes.ok) setSheetData(await newDataRes.json());
+      setIsModalOpen(false);
+    } catch (err) {
+      alert("Failed to delete match: " + (err instanceof Error ? err.message : String(err)));
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleAddMatch = async (e: FormEvent) => {
@@ -169,7 +203,7 @@ export function SheetHandling() {
         team_b: formTeamB || "" // send empty string if omitted to clear adjacent cell
       };
       const res = await fetch("/api/gsheet", {
-        method: "POST",
+        method: isEditMode ? "PUT" : "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload)
       });
@@ -183,7 +217,7 @@ export function SheetHandling() {
       if (newDataRes.ok) setSheetData(await newDataRes.json());
       setIsModalOpen(false);
     } catch (err) {
-      alert("Failed to add match: " + (err instanceof Error ? err.message : String(err)));
+      alert(`Failed to ${isEditMode ? "edit" : "add"} match: ` + (err instanceof Error ? err.message : String(err)));
     } finally {
       setIsSubmitting(false);
     }
@@ -242,7 +276,7 @@ export function SheetHandling() {
                         matches.map((m, idx) => {
                           const colors = getGroundColor(m.ground);
                           return (
-                          <div key={idx} className="card border mb-1 shadow-sm" style={{ borderLeft: `3px solid ${colors.border}`, backgroundColor: colors.bg, minHeight: 'auto' }}>
+                          <div key={idx} className="card border mb-1 shadow-sm" style={{ borderLeft: `3px solid ${colors.border}`, backgroundColor: colors.bg, minHeight: 'auto', cursor: 'pointer' }} onClick={() => openEditModal(date, slot, m.ground, m.team_a, m.team_b)} title="Click to edit match">
                             <div className="card-header py-0 px-1 bg-transparent border-bottom-0 d-flex align-items-center" style={{ fontSize: '0.65rem', fontWeight: 600, color: colors.border }}>
                               <svg className="me-1" style={{ color: colors.border }} width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
                               {m.ground}
@@ -278,7 +312,7 @@ export function SheetHandling() {
           <div className="modal-dialog modal-dialog-centered">
             <div className="modal-content">
               <div className="modal-header">
-                <h5 className="modal-title">Add Match</h5>
+                <h5 className="modal-title">{isEditMode ? "Edit Match" : "Add Match"}</h5>
                 <button type="button" className="btn-close" onClick={() => setIsModalOpen(false)}></button>
               </div>
               <div className="modal-body">
@@ -295,7 +329,7 @@ export function SheetHandling() {
                   </div>
                   <div className="mb-3">
                     <label className="form-label small mb-1 fw-bold">Ground</label>
-                    <select className="form-select form-select-sm" value={formGround} onChange={(e) => setFormGround(e.target.value)} required>
+                    <select className="form-select form-select-sm" value={formGround} onChange={(e) => setFormGround(e.target.value)} required disabled={isEditMode}>
                       <option value="" disabled>Select Ground</option>
                       {sheetGrounds.map(g => <option key={g} value={g}>{g}</option>)}
                     </select>
@@ -308,11 +342,20 @@ export function SheetHandling() {
                     <label className="form-label small mb-1 fw-bold">Team B <span className="fw-normal text-muted">(Optional)</span></label>
                     <input type="text" className="form-control form-control-sm" placeholder="Enter opponent team name" value={formTeamB} onChange={(e) => setFormTeamB(e.target.value)} />
                   </div>
-                  <div className="d-flex justify-content-end gap-2">
-                    <button className="btn btn-sm btn-outline-secondary px-3" type="button" onClick={() => setIsModalOpen(false)}>Cancel</button>
-                    <button className="btn btn-sm btn-primary px-4" type="submit" disabled={isSubmitting}>
-                      {isSubmitting ? "Saving..." : "Save Match"}
-                    </button>
+                  <div className="d-flex justify-content-between mt-4">
+                    <div>
+                      {isEditMode && (
+                        <button className="btn btn-sm btn-outline-danger px-3" type="button" onClick={handleDeleteMatch} disabled={isSubmitting}>
+                          Delete Match
+                        </button>
+                      )}
+                    </div>
+                    <div className="d-flex gap-2">
+                      <button className="btn btn-sm btn-outline-secondary px-3" type="button" onClick={() => setIsModalOpen(false)}>Cancel</button>
+                      <button className="btn btn-sm btn-primary px-4" type="submit" disabled={isSubmitting}>
+                        {isSubmitting ? "Saving..." : "Save Match"}
+                      </button>
+                    </div>
                   </div>
                 </form>
               </div>

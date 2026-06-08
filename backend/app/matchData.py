@@ -260,7 +260,7 @@ async def add_google_sheet_match(payload: MatchPayload, gid: str = "0"):
             })
         
         updates.append({
-            "range": f"'{sheet_title}'!{col_to_letter(col_idx)}{row_idx + 1}",
+            "range": f"'{sheet_title}'!{col_to_letter(col_idx)}{row_idx + 1}:{col_to_letter(col_idx + 1)}{row_idx + 1}",
             "values": [row_values]
         })
 
@@ -282,6 +282,118 @@ async def add_google_sheet_match(payload: MatchPayload, gid: str = "0"):
         "message": "Match added successfully", 
         "date": payload.date,
         "cell": f"{col_to_letter(col_idx)}{row_idx + 1}"
+    }
+
+
+@router.put("/api/gsheet")
+async def edit_google_sheet_match(payload: MatchPayload, gid: str = "0"):
+    """
+    Edits a match in the Google Sheet (same behavior as adding/overwriting).
+    """
+    return await add_google_sheet_match(payload, gid)
+
+
+@router.delete("/api/gsheet")
+async def delete_google_sheet_match(date: str, slot: str, ground: str, gid: str = "0"):
+    """
+    Deletes a match from the Google Sheet by clearing its cell(s).
+    """
+    token = get_access_token()
+    headers = {"Authorization": f"Bearer {token}"}
+    
+    async with httpx.AsyncClient(timeout=15, follow_redirects=True) as client:
+        # 1. Fetch metadata to get the exact Sheet Name
+        meta_url = f"https://sheets.googleapis.com/v4/spreadsheets/{SHEET_ID}"
+        try:
+            meta_res = await client.get(meta_url, headers=headers)
+            meta_res.raise_for_status()
+        except httpx.HTTPStatusError as exc:
+            raise HTTPException(status_code=exc.response.status_code, detail=f"Failed to fetch sheet metadata: {exc.response.text}") from exc
+        except Exception as e:
+            raise HTTPException(status_code=502, detail=f"Failed to fetch sheet metadata: {e}")
+        
+        sheet_title = None
+        for sheet in meta_res.json().get("sheets", []):
+            if str(sheet["properties"]["sheetId"]) == gid:
+                sheet_title = sheet["properties"]["title"]
+                break
+        
+        if not sheet_title:
+            raise HTTPException(status_code=404, detail="Sheet tab not found.")
+
+        # 2. Fetch current data via CSV
+        csv_url = f"https://docs.google.com/spreadsheets/d/{SHEET_ID}/export?format=csv&gid={gid}&access_token={token}"
+        try:
+            csv_res = await client.get(csv_url, headers=headers)
+            csv_res.raise_for_status()
+        except httpx.HTTPStatusError as exc:
+            raise HTTPException(status_code=exc.response.status_code, detail=f"Failed to fetch CSV data: {exc.response.text}") from exc
+        except Exception as e:
+            raise HTTPException(status_code=502, detail=f"Failed to fetch CSV data: {e}")
+            
+        reader = csv.reader(StringIO(csv_res.text))
+        data = list(reader)
+
+        if len(data) < 2:
+            raise HTTPException(status_code=400, detail="Sheet is empty or malformed headers.")
+
+        grounds = data[0]
+        slots = data[1]
+
+        col_idx = -1
+        for i in range(2, max(len(grounds), len(slots))):
+            g = grounds[i].strip() if i < len(grounds) else ""
+            s = slots[i].strip() if i < len(slots) else ""
+            if g == ground and s == slot:
+                col_idx = i
+                break
+
+        if col_idx == -1:
+            raise HTTPException(status_code=400, detail="Ground and Slot combination not found in sheet headers.")
+
+        row_indices_to_clear = []
+        current_date = ""
+        in_date_block = False
+        for i in range(2, len(data)):
+            r = data[i]
+            d = r[0].strip() if len(r) > 0 else ""
+
+            if d:
+                if in_date_block:
+                    break
+                if d == date:
+                    in_date_block = True
+            
+            if in_date_block:
+                if col_idx < len(r) and r[col_idx].strip():
+                    row_indices_to_clear.append(i)
+
+        if not row_indices_to_clear:
+            return {"message": "No match found to delete."}
+
+        # 3. Clear the cells
+        updates = []
+        for row_idx in row_indices_to_clear:
+            updates.append({
+                "range": f"'{sheet_title}'!{col_to_letter(col_idx)}{row_idx + 1}:{col_to_letter(col_idx + 1)}{row_idx + 1}",
+                "values": [["", ""]]
+            })
+
+        update_url = f"https://sheets.googleapis.com/v4/spreadsheets/{SHEET_ID}/values:batchUpdate"
+        update_body = {"valueInputOption": "USER_ENTERED", "data": updates}
+
+        try:
+            update_res = await client.post(update_url, headers=headers, json=update_body)
+            update_res.raise_for_status()
+        except httpx.HTTPStatusError as exc:
+            raise HTTPException(status_code=exc.response.status_code, detail=f"Failed to update Google Sheet: {exc.response.text}") from exc
+        except Exception as e:
+            raise HTTPException(status_code=502, detail=f"Failed to update Google Sheet: {e}")
+
+    return {
+        "message": "Match deleted successfully",
+        "date": date,
+        "cells_cleared": len(row_indices_to_clear),
     }
 
 
