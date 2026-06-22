@@ -47,6 +47,7 @@ def _upstream_headers(
         "api-key": api_key or CRICHEROES_API_KEY,
         "device-type": device_type or CRICHEROES_DEVICE_TYPE,
         "udid": udid or CRICHEROES_UDID,
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
     }
 
 app = FastAPI(title="FastAPI Backend", version="0.1.0")
