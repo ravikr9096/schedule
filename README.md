@@ -28,6 +28,9 @@ npm run dev
 - Backend: `GET /health`, `GET /api/hello`
 - Frontend: loads data from `GET /api/hello`
 
+Initiate Database:
+
+CREATE SEQUENCE team_directory_id_seq;
 
 CREATE TABLE IF NOT EXISTS public.team_directory
 (
@@ -38,7 +41,5 @@ CREATE TABLE IF NOT EXISTS public.team_directory
     team_name text COLLATE pg_catalog."default",
     CONSTRAINT team_directory_pkey PRIMARY KEY (id)
 )
-
-TABLESPACE pg_default;
 
 SELECT setval('team_directory_id_seq', (SELECT MAX(id) FROM team_directory));
