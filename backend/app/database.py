@@ -3,7 +3,6 @@ from sqlalchemy.orm import declarative_base
 from sqlalchemy.orm import sessionmaker
 
 # Adding ?sslmode=require is necessary for Render Postgres connections
-# SQLALCHEMY_DATABASE_URL = "postgresql://schedule_8563_user:UpXOD481bUYhwEoBWHfmEAMtJ1u2Y6CM@dpg-d93vdr1kh4rs73e50d30-a.virginia-postgres.render.com/schedule_8563?sslmode=require"
 SQLALCHEMY_DATABASE_URL = "postgresql://schedule1_user:tFTWx05hNAwAJz7zBT9o8u7zt6R8yLL4@dpg-d9o8vsh42hec738v81gg-a.virginia-postgres.render.com/schedule1?sslmode=require"
 
 engine = create_engine(SQLALCHEMY_DATABASE_URL)
