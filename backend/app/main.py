@@ -16,15 +16,28 @@ import jwt
 from datetime import datetime, timedelta, timezone
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 
+import sys
+
+# Ensure the app directory is in sys.path so modules (team, matchData, database) can be resolved
+app_dir = str(Path(__file__).resolve().parent)
+if app_dir not in sys.path:
+    sys.path.insert(0, app_dir)
+
 try:
     from team import router as team_router
-except ImportError:
-    from .team import router as team_router
+except ModuleNotFoundError as e:
+    if e.name == "team":
+        from .team import router as team_router
+    else:
+        raise
     
 try:
     from matchData import router as matchData_router
-except ImportError:
-    from .matchData import router as matchData_router
+except ModuleNotFoundError as e:
+    if e.name == "matchData":
+        from .matchData import router as matchData_router
+    else:
+        raise
 
 # CricHeroes API headers (used for tournament and match endpoints)
 CRICHEROES_API_KEY = "cr!CkH3r0s"

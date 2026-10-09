@@ -30,7 +30,6 @@ class TeamDirectoryCreate(BaseModel):
 class TeamDirectoryResponse(TeamDirectoryCreate):
     class Config:
         from_attributes = True  # Allows Pydantic to read data from SQLAlchemy models (Pydantic v2)
-        orm_mode = True         # Fallback for Pydantic v1
 
 # --- API Endpoint ---
 @router.get("/api/team", response_model=List[TeamDirectoryResponse])
